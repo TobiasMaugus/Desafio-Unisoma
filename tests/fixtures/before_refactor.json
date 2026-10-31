@@ -1,0 +1,350 @@
+{
+  "protected_hashes": {
+    "app.py": "ddc7bb3b9f0849a5fcb6fe8bace45668d32da0aeee4805f6c92aa22918d3e5a8",
+    "requirements.txt": "9af0813b1d63bd646c7bebcf999ce14f75410e1b80e8fbd93784005acd039d3a",
+    "MANUAL_USUARIO.md": "fb092191d8725db318a894f844ea0156ea061af95918ecae7e81fcfaf6a957ce",
+    "MANUAL_USUARIO.pdf": "18c0d702acca5fd8b037805c00b842bceda6b42d75e0b034a65e18b252a1aea5"
+  },
+  "cases": {
+    "1_False": {
+      "choices": {
+        "manha": 2,
+        "tarde": 2
+      },
+      "blocked": false,
+      "issues": [
+        "Alunos, linhas 21, 44: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 23, 48: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 25, 28: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 27, 111: nome duplicado; registros mantidos como pessoas distintas."
+      ],
+      "stats": [
+        [
+          "MANHÃ - A",
+          30,
+          17,
+          13
+        ],
+        [
+          "MANHÃ - B",
+          30,
+          18,
+          12
+        ],
+        [
+          "TARDE - C",
+          30,
+          17,
+          13
+        ],
+        [
+          "TARDE - D",
+          30,
+          18,
+          12
+        ]
+      ],
+      "workbook_digest": "39ee54e5f900999bc002bf4dd24854bb6485fc804735e020c04eb62d8dbc83b9"
+    },
+    "1_True": {
+      "choices": {
+        "manha": 2,
+        "tarde": 2
+      },
+      "blocked": false,
+      "issues": [
+        "Alunos, linhas 21, 44: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 23, 48: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 25, 28: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 27, 111: nome duplicado; registros mantidos como pessoas distintas."
+      ],
+      "stats": [
+        [
+          "MANHÃ - A",
+          30,
+          17,
+          13
+        ],
+        [
+          "MANHÃ - B",
+          30,
+          18,
+          12
+        ],
+        [
+          "TARDE - C",
+          30,
+          17,
+          13
+        ],
+        [
+          "TARDE - D",
+          30,
+          18,
+          12
+        ]
+      ],
+      "workbook_digest": "39ee54e5f900999bc002bf4dd24854bb6485fc804735e020c04eb62d8dbc83b9"
+    },
+    "2_False": {
+      "choices": {
+        "manha": 3,
+        "tarde": 3
+      },
+      "blocked": false,
+      "issues": [
+        "Alunos, linhas 24, 44, 71: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 38, 95: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 102, 156: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 137, 157: nome duplicado; registros mantidos como pessoas distintas."
+      ],
+      "stats": [
+        [
+          "MANHÃ - A",
+          24,
+          17,
+          7
+        ],
+        [
+          "MANHÃ - B",
+          25,
+          18,
+          7
+        ],
+        [
+          "MANHÃ - C",
+          24,
+          18,
+          6
+        ],
+        [
+          "TARDE - D",
+          29,
+          9,
+          20
+        ],
+        [
+          "TARDE - E",
+          29,
+          8,
+          21
+        ],
+        [
+          "TARDE - F",
+          29,
+          9,
+          20
+        ]
+      ],
+      "workbook_digest": "c59f13a549b87ee84581c37958dd0f9b04a90b9a84384257ea0649b9e448853d"
+    },
+    "2_True": {
+      "choices": {
+        "manha": 3,
+        "tarde": 3
+      },
+      "blocked": false,
+      "issues": [
+        "Alunos, linhas 24, 44, 71: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 38, 95: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 102, 156: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 137, 157: nome duplicado; registros mantidos como pessoas distintas."
+      ],
+      "stats": [
+        [
+          "MANHÃ - A",
+          24,
+          17,
+          7
+        ],
+        [
+          "MANHÃ - B",
+          25,
+          18,
+          7
+        ],
+        [
+          "MANHÃ - C",
+          24,
+          18,
+          6
+        ],
+        [
+          "TARDE - D",
+          29,
+          9,
+          20
+        ],
+        [
+          "TARDE - E",
+          29,
+          8,
+          21
+        ],
+        [
+          "TARDE - F",
+          29,
+          9,
+          20
+        ]
+      ],
+      "workbook_digest": "c59f13a549b87ee84581c37958dd0f9b04a90b9a84384257ea0649b9e448853d"
+    },
+    "3_False": {
+      "choices": {
+        "manha": 5,
+        "tarde": 1
+      },
+      "blocked": false,
+      "issues": [
+        "Alunos, linhas 12, 14: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 28, 86: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 35, 42: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 36, 96: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 43, 62: nome duplicado; registros mantidos como pessoas distintas."
+      ],
+      "stats": [
+        [
+          "MANHÃ - A",
+          28,
+          16,
+          12
+        ],
+        [
+          "MANHÃ - B",
+          28,
+          16,
+          12
+        ],
+        [
+          "MANHÃ - C",
+          28,
+          16,
+          12
+        ],
+        [
+          "MANHÃ - D",
+          28,
+          15,
+          13
+        ],
+        [
+          "MANHÃ - E",
+          28,
+          16,
+          12
+        ],
+        [
+          "TARDE - F",
+          25,
+          10,
+          15
+        ]
+      ],
+      "workbook_digest": "09bf0a0972f14dd24fa4d91b4a8e623c1119ebfe2b7dfd2c13a30490e8fc89b1"
+    },
+    "3_True": {
+      "choices": {
+        "manha": 4,
+        "tarde": 1
+      },
+      "blocked": false,
+      "issues": [
+        "Alunos, linhas 12, 14: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 28, 86: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 35, 42: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 36, 96: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 43, 62: nome duplicado; registros mantidos como pessoas distintas."
+      ],
+      "stats": [
+        [
+          "MANHÃ - A",
+          35,
+          20,
+          15
+        ],
+        [
+          "MANHÃ - B",
+          35,
+          20,
+          15
+        ],
+        [
+          "MANHÃ - C",
+          35,
+          20,
+          15
+        ],
+        [
+          "MANHÃ - D",
+          35,
+          19,
+          16
+        ],
+        [
+          "TARDE - E",
+          25,
+          10,
+          15
+        ]
+      ],
+      "workbook_digest": "968f899d04072903f4f5ea5152b3b976ea77d8547bd860dc98a36eb7b111d97f"
+    },
+    "4_False": {
+      "choices": {
+        "manha": 3,
+        "tarde": 3
+      },
+      "blocked": true,
+      "issues": [
+        "Alunos, linha 36: texto padronizado para F, Manhã.",
+        "Alunos, linha 42: texto padronizado para M, Manhã.",
+        "Alunos, linha 46: texto padronizado para F, Tarde.",
+        "Alunos, linha 48: sexo inválido (X).",
+        "Alunos, linha 72: sexo inválido (None).",
+        "Alunos, linha 74: sexo inválido (?).",
+        "Alunos, linha 77: disponibilidade inválida (Noite).",
+        "Alunos, linha 89: disponibilidade inválida (Integral).",
+        "Alunos, linha 92: disponibilidade inválida (None).",
+        "Alunos, linha 102: nome ausente ou inválido.",
+        "Alunos, linha 159: rodapé 'Total' ignorado.",
+        "Alunos, linhas 5, 80: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 12, 108: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 14, 45: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 70, 133: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 114, 156: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 124, 157: nome duplicado; registros mantidos como pessoas distintas."
+      ],
+      "stats": [],
+      "workbook_digest": "1f8a0993995db5aea6b7a16610038f90fe0a4461629589ddbceeb2c6a6fc813c"
+    },
+    "4_True": {
+      "choices": {
+        "manha": 3,
+        "tarde": 3
+      },
+      "blocked": true,
+      "issues": [
+        "Alunos, linha 36: texto padronizado para F, Manhã.",
+        "Alunos, linha 42: texto padronizado para M, Manhã.",
+        "Alunos, linha 46: texto padronizado para F, Tarde.",
+        "Alunos, linha 48: sexo inválido (X).",
+        "Alunos, linha 72: sexo inválido (None).",
+        "Alunos, linha 74: sexo inválido (?).",
+        "Alunos, linha 77: disponibilidade inválida (Noite).",
+        "Alunos, linha 89: disponibilidade inválida (Integral).",
+        "Alunos, linha 92: disponibilidade inválida (None).",
+        "Alunos, linha 102: nome ausente ou inválido.",
+        "Alunos, linha 159: rodapé 'Total' ignorado.",
+        "Alunos, linhas 5, 80: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 12, 108: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 14, 45: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 70, 133: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 114, 156: nome duplicado; registros mantidos como pessoas distintas.",
+        "Alunos, linhas 124, 157: nome duplicado; registros mantidos como pessoas distintas."
+      ],
+      "stats": [],
+      "workbook_digest": "1f8a0993995db5aea6b7a16610038f90fe0a4461629589ddbceeb2c6a6fc813c"
+    }
+  }
+}

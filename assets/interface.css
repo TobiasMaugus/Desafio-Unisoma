@@ -1,0 +1,44 @@
+/* Presentation only: public container keys and semantic elements.
+   Colors and typography for native widgets live in .streamlit/config.toml. */
+.st-key-abc_page { margin-inline: auto; align-self: center; }
+.st-key-abc_header {
+  border-bottom: 1px solid #cfd9e2;
+  padding-block: 0.25rem 1.25rem;
+  margin-bottom: 0.5rem;
+  row-gap: 1.25rem;
+}
+.st-key-abc_header h1 { padding-block: 0; letter-spacing: -0.035em; }
+.st-key-abc_header p { margin-bottom: 0; }
+.st-key-abc_header img { max-width: 100%; height: auto; }
+.st-key-abc_brand { background: #fff; padding: 0.4rem 0.55rem; border-radius: 0.3rem; }
+.st-key-abc_upload, .st-key-abc_settings, .st-key-abc_results {
+  padding: 1.5rem;
+}
+.st-key-abc_upload h2, .st-key-abc_settings h2, .st-key-abc_results h2 {
+  padding-top: 0;
+  letter-spacing: -0.02em;
+}
+.st-key-abc_format { border-left: 3px solid #2f9587; padding-left: 1.25rem; }
+.st-key-abc_format h3 { padding-top: 0; }
+.st-key-abc_next { padding: 0.25rem 0.5rem; }
+.st-key-abc_next p { margin-bottom: 0; }
+.st-key-abc_room_summary { border-top: 1px solid #e1e7ec; padding-top: 1rem; }
+.st-key-abc_totals { padding-block: 0.75rem 0.25rem; border-bottom: 1px solid #e1e7ec; }
+.st-key-abc_results { border-top: 3px solid #2f9587; }
+.st-key-abc_downloads { padding-block: 0.25rem 0.75rem; }
+.st-key-abc_manual {
+  padding: 1.75rem;
+  margin-top: 0.5rem;
+}
+.st-key-abc_page button { min-height: 2.75rem; }
+.st-key-abc_page [role="tab"] { min-height: 3rem; font-weight: 600; }
+.st-key-abc_page :is(button, a, input, [role="tab"], [tabindex]):focus-visible {
+  outline: 3px solid #0e76bc;
+  outline-offset: 3px;
+}
+.st-key-abc_page :is(p, h1, h2, h3, label) { overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .st-key-abc_upload, .st-key-abc_settings, .st-key-abc_results, .st-key-abc_manual { padding: 1rem; }
+  .st-key-abc_header h1 { font-size: 1.65rem; }
+  .st-key-abc_format { padding-left: 0.85rem; }
+}

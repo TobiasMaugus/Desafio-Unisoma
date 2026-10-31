@@ -1,0 +1,33 @@
+{
+  "sizes": [
+    {
+      "viewport": 1366,
+      "document": 1366
+    },
+    {
+      "viewport": 1024,
+      "document": 1024
+    },
+    {
+      "viewport": 768,
+      "document": 768
+    },
+    {
+      "viewport": 390,
+      "document": 390
+    }
+  ],
+  "downloads": [
+    "cenario_visual_resultado.xlsx",
+    "cenario_visual_resumo.csv",
+    "Manual_Ensalamento_ABC.pdf",
+    "inconsistente_inconsistencias.xlsx"
+  ],
+  "external_requests": [],
+  "console_errors": [],
+  "keyboard_focus": {
+    "tag": "A",
+    "outline": "solid"
+  },
+  "workbook_digest": "8020bb14bf4eade6e5fe563b9f7381e34c0c6d18438dba5109e20e6d8fca372e"
+}

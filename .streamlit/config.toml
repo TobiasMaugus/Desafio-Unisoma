@@ -1,0 +1,66 @@
+# Local theme; Streamlit 1.66.1 discovers it beside the entrypoint as well.
+[client]
+toolbarMode = "auto"
+
+[theme]
+base = "light"
+font = "Segoe UI, Arial, sans-serif"
+headingFont = "Segoe UI, Arial, sans-serif"
+baseFontSize = 16
+baseFontWeight = 400
+headingFontSizes = ["2rem", "1.35rem", "1.12rem", "1rem", "1rem", "1rem"]
+headingFontWeights = [650, 600, 600, 600, 600, 600]
+metricValueFontSize = "1.8rem"
+metricValueFontWeight = 600
+baseRadius = "0.5rem"
+buttonRadius = "0.4rem"
+showWidgetBorder = true
+linkUnderline = true
+paddingTop = "1.5rem"
+paddingBottom = "3rem"
+
+[theme.light]
+primaryColor = "#0E76BC"
+backgroundColor = "#F5F7F9"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#23364B"
+borderColor = "#CFD9E2"
+dataframeBorderColor = "#CFD9E2"
+dataframeHeaderBackgroundColor = "#EDF2F6"
+dataframeHeaderTextColor = "#23364B"
+linkColor = "#0966A5"
+blueColor = "#0E76BC"
+blueTextColor = "#135C8C"
+blueBackgroundColor = "#EAF3FA"
+greenColor = "#2F9587"
+greenTextColor = "#20665B"
+greenBackgroundColor = "#EAF5F1"
+yellowTextColor = "#795000"
+yellowBackgroundColor = "#FFF6E4"
+redTextColor = "#A52D35"
+redBackgroundColor = "#FCEEF0"
+chartCategoricalColors = ["#2F9587", "#2B469A", "#0E76BC", "#9ECD55"]
+
+[theme.dark]
+primaryColor = "#49A8DF"
+backgroundColor = "#111A23"
+secondaryBackgroundColor = "#1D2934"
+textColor = "#E8EEF4"
+borderColor = "#3A4A58"
+dataframeBorderColor = "#3A4A58"
+dataframeHeaderBackgroundColor = "#273542"
+dataframeHeaderTextColor = "#E8EEF4"
+linkColor = "#83C9F0"
+blueColor = "#5BB5EA"
+blueTextColor = "#91D2F4"
+blueBackgroundColor = "#19384C"
+greenColor = "#54BCA5"
+greenTextColor = "#8AD7C5"
+greenBackgroundColor = "#183B35"
+yellowColor = "#E7B64B"
+yellowTextColor = "#F2D18B"
+yellowBackgroundColor = "#42351D"
+redColor = "#E4777D"
+redTextColor = "#F5ACB1"
+redBackgroundColor = "#44272D"
+chartCategoricalColors = ["#54BCA5", "#849DF0", "#5BB5EA", "#A8D66B"]
