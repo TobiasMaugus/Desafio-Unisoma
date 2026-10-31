@@ -14,10 +14,17 @@
 .st-key-abc_upload, .st-key-abc_settings, .st-key-abc_results {
   padding: 1.5rem;
 }
+.st-key-abc_upload { border-top: 4px solid #0e76bc; }
+.st-key-abc_settings { border-top: 4px solid #2f9587; margin-top: 2rem; }
+.st-key-abc_results { margin-top: 2rem; }
 .st-key-abc_upload h2, .st-key-abc_settings h2, .st-key-abc_results h2 {
   padding-top: 0;
   letter-spacing: -0.02em;
 }
+.st-key-abc_upload h2, .st-key-abc_settings h2, .st-key-abc_results h2 {
+  font-size: 1.55rem;
+}
+.st-key-abc_page hr { margin-block: 2rem; border-color: #cfd9e2; }
 .st-key-abc_format { border-left: 3px solid #2f9587; padding-left: 1.25rem; }
 .st-key-abc_format h3 { padding-top: 0; }
 .st-key-abc_next { padding: 0.25rem 0.5rem; }
@@ -37,6 +44,7 @@
   outline-offset: 3px;
 }
 .st-key-abc_page :is(p, h1, h2, h3, label) { overflow-wrap: anywhere; }
+.st-key-abc_page details[data-testid="stExpander"] { border-color: #cfd9e2; }
 @media (max-width: 640px) {
   .st-key-abc_upload, .st-key-abc_settings, .st-key-abc_results, .st-key-abc_manual { padding: 1rem; }
   .st-key-abc_header h1 { font-size: 1.65rem; }

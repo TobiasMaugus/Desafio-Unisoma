@@ -2,6 +2,9 @@
 [client]
 toolbarMode = "auto"
 
+[server]
+enableStaticServing = true
+
 [theme]
 base = "light"
 font = "Segoe UI, Arial, sans-serif"
