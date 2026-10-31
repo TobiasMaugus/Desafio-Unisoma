@@ -40,6 +40,17 @@ def preview_rows(sheet, limit=12):
     return columns, [list(row) + [None] * (width - len(row)) for row in rows[1:]]
 
 
+def room_choices_for_mode(students, resources, allow_empty):
+    choices = {}
+    for period, suffix in (("Manhã", "manha"), ("Tarde", "tarde")):
+        available = resources.get(f"turmas_{suffix}")
+        capacity = resources.get(f"vagas_{suffix}")
+        if available and capacity:
+            count = sum(student[2] == period for student in students)
+            choices[suffix] = min(available, (count + capacity - 1) // capacity) if allow_empty else available
+    return choices
+
+
 def inspect_workbook(book, room_choices=None):
     issues, students, resources = [], [], {}
     blocking = False
@@ -78,6 +89,9 @@ def inspect_workbook(book, room_choices=None):
     for name, rows in names.items():
         if len(rows) > 1:
             issues.append(f"Alunos, linhas {', '.join(map(str, rows))}: nome duplicado; registros mantidos como pessoas distintas.")
+    if not students:
+        issues.append("Alunos: nenhum aluno válido encontrado.")
+        blocking = True
 
     sheet = book["Turmas"]
     if [sheet.cell(1, col).value for col in (1, 2)] != ["Recursos", "Quantidade"]:

@@ -19,11 +19,11 @@ O programa reconhece diferenças simples de escrita, como `manha`, espaços extr
 
 Abra o aplicativo e selecione a planilha. A prévia mostra as primeiras linhas de `Alunos` e `Turmas`, além do número de alunos por turno e da capacidade informada.
 
-## 3. Escolha quantas turmas ocupar
+## 3. Escolha como usar as salas
 
-Os campos **Turmas ocupadas · Manhã** e **Turmas ocupadas · Tarde** aceitam um número de zero até o total disponível. Para usar todas, escolha o total disponível em cada turno. Toda turma escolhida precisa receber pelo menos um aluno. A escolha também precisa oferecer vagas suficientes para todos os alunos do turno.
+Deixe **Prefiro deixar salas vazias quando possível** desmarcado para ocupar todas as salas disponíveis. Marque essa opção para usar apenas o número mínimo de salas que comporta os alunos em cada turno. A tela mostra quantas salas serão ocupadas.
 
-Se a planilha já tiver `turmas_usadas_manha` e/ou `turmas_usadas_tarde`, esses números aparecem inicialmente na tela. Sem essa informação, o programa propõe o maior número possível de turmas não vazias.
+Cada sala ocupada recebe pelo menos um aluno, e as quantidades entre salas ocupadas do mesmo turno diferem em no máximo um. Se houver menos alunos do que salas disponíveis, escolha a opção que permite salas vazias.
 
 ## 4. Gere e confira o resultado
 
@@ -35,7 +35,7 @@ Se houver dados inválidos, o aplicativo não gera uma alocação parcial. Ele r
 
 - **Excel completo (.xlsx):** cópia da planilha enviada, com as abas `Ensalamento` e `Inconsistências`. A ordem das colunas de `Ensalamento` é `Nome`, `Sexo`, `Disponibilidade`, `Turma`.
 - **Resumo por turma (.csv):** quantidade total, meninas, meninos e porcentagem de meninas por turma.
-- **Manual (.pdf ou .md):** este documento, disponível na aba **Manual e ajuda** para leitura e download.
+- **Manual (.pdf):** este documento, disponível na aba **Manual e ajuda** para leitura e download.
 
 O arquivo original nunca é alterado pelo aplicativo.
 
@@ -45,8 +45,8 @@ O arquivo original nunca é alterado pelo aplicativo.
 | --- | --- |
 | Falta a aba `Alunos` ou `Turmas` | Confira os nomes das abas. |
 | Sexo ou disponibilidade inválidos | Preencha com `F`/`M` e `Manhã`/`Tarde`. |
-| Turmas demais para o número de alunos | Reduza o número de turmas ocupadas ou corrija a lista de alunos. |
-| Falta de vagas | Aumente o número de turmas ocupadas ou a capacidade informada. |
+| Turmas demais para o número de alunos | Marque a opção que permite salas vazias ou corrija a lista de alunos. |
+| Falta de vagas | Corrija a capacidade informada ou acrescente salas disponíveis. |
 | Nome duplicado | Verifique o cadastro; se forem pessoas distintas, mantenha as duas linhas. |
 
 ## Dados e execução

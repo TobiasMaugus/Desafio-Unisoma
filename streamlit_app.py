@@ -8,26 +8,26 @@ from openpyxl import load_workbook
 import pandas as pd
 import streamlit as st
 
-from app import inspect_workbook, make_result, preview_rows
+from app import inspect_workbook, make_result, preview_rows, room_choices_for_mode
 
 
 st.set_page_config(page_title="ABC Aprendiz · Ensalamento", page_icon="🎓", layout="wide")
 st.markdown("""
 <style>
-  .stApp {background: #f7f9fc; color: #17283f;}
+  .stApp {background: #f7fafc; color: #1b315c;}
   .block-container {max-width: 1180px; padding-top: 2rem; padding-bottom: 4rem;}
-  .hero {background: linear-gradient(115deg,#16345b 0%,#245b82 60%,#198f96 100%);
+  .hero {background: linear-gradient(115deg,#243d87 0%,#2b469a 65%,#0f75bb 100%);
          border-radius: 22px; padding: 2rem 2.4rem; color: white; margin-bottom: 1.6rem;
-         box-shadow: 0 12px 32px #16345b25;}
+         border-top: 5px solid #9ccd58; box-shadow: 0 12px 32px #2b469a25;}
   .hero h1 {color: white; margin: .15rem 0 .4rem; font-size: 2.45rem;}
-  .hero p {color: #e1f4fa; margin: 0; font-size: 1.05rem;}
-  .eyebrow {letter-spacing: .14em; text-transform: uppercase; font-size: .76rem; font-weight: 700; color: #a7e1e2;}
+  .hero p {color: #edf7ff; margin: 0; font-size: 1.05rem;}
+  .eyebrow {letter-spacing: .14em; text-transform: uppercase; font-size: .76rem; font-weight: 700; color: #d4f3ed;}
   div[data-testid="stMetric"] {background: white; border: 1px solid #e4eaf1; border-radius: 15px;
-    padding: 1rem 1.2rem; box-shadow: 0 3px 12px #16345b0c;}
-  .stApp [data-baseweb="tab"], .stApp [data-baseweb="tab"] * {color: #20354e !important;}
+    padding: 1rem 1.2rem; box-shadow: 0 3px 12px #2b469a0c;}
+  .stApp [data-baseweb="tab"], .stApp [data-baseweb="tab"] * {color: #1b315c !important;}
   .stApp [data-baseweb="tab"][aria-selected="true"],
-  .stApp [data-baseweb="tab"][aria-selected="true"] * {color: #a7263d !important;}
-  .stApp [data-testid="stMetric"] * {color: #17283f !important;}
+  .stApp [data-baseweb="tab"][aria-selected="true"] * {color: #2b469a !important;}
+  .stApp [data-testid="stMetric"] * {color: #1b315c !important;}
   div[data-testid="stFileUploader"], div[data-testid="stDataFrame"] {border-radius: 14px;}
   .small-note {color:#5b6c80; font-size:.92rem;}
 </style>
@@ -48,6 +48,10 @@ def output_table(content, sheet_name):
     return table
 
 
+brand, symbol = st.columns([5, 1], vertical_alignment="center")
+brand.image(str(Path(__file__).with_name("abc1024x279.webp")), width=430)
+symbol.image(str(Path(__file__).with_name("abc-logo-1024x798.webp")), width=105)
+
 st.markdown("""
 <div class="hero">
   <div class="eyebrow">ABC Aprendiz · Desafio UniSoma 2026</div>
@@ -61,12 +65,9 @@ work_tab, manual_tab = st.tabs(["📊 Ensalamento", "📘 Manual e ajuda"])
 with manual_tab:
     manual = Path(__file__).with_name("MANUAL_USUARIO.md").read_text(encoding="utf-8")
     st.markdown(manual)
-    manual_columns = st.columns(2)
-    manual_columns[0].download_button("Baixar manual (.pdf)",
-                                      Path(__file__).with_name("MANUAL_USUARIO.pdf").read_bytes(),
-                                      file_name="Manual_Ensalamento_ABC.pdf", mime="application/pdf")
-    manual_columns[1].download_button("Baixar versão editável (.md)", manual.encode("utf-8"),
-                                      file_name="Manual_Ensalamento_ABC.md", mime="text/markdown")
+    st.download_button("Baixar manual (.pdf)",
+                       Path(__file__).with_name("MANUAL_USUARIO.pdf").read_bytes(),
+                       file_name="Manual_Ensalamento_ABC.pdf", mime="application/pdf")
 
 with work_tab:
     st.subheader("1 · Escolha o arquivo")
@@ -103,9 +104,11 @@ with work_tab:
 
     students, resources, _, _ = inspect_workbook(book)
     book.close()
-    st.subheader("2 · Defina as turmas a ocupar")
-    st.caption("As turmas escolhidas não ficam vazias. A diferença de alunos entre elas é de no máximo um.")
-    choices = {}
+    st.subheader("2 · Escolha como usar as salas")
+    allow_empty = st.checkbox("Prefiro deixar salas vazias quando possível", value=False,
+                              help="Usa o menor número de salas que comporta todos os alunos. Desmarcado, ocupa todas as salas disponíveis.")
+    st.caption("As salas ocupadas recebem alunos com diferença de no máximo um entre elas no mesmo turno.")
+    choices = room_choices_for_mode(students, resources, allow_empty)
     cols = st.columns(2, gap="large")
     for col, (period, suffix) in zip(cols, (("Manhã", "manha"), ("Tarde", "tarde"))):
         with col:
@@ -113,12 +116,8 @@ with work_tab:
             capacity = resources.get(f"vagas_{suffix}")
             count = sum(row[2] == period for row in students)
             if available:
-                proposed = resources.get(f"turmas_usadas_{suffix}", min(available, count))
-                selected = st.number_input(f"Turmas ocupadas · {period}", min_value=0,
-                                           max_value=available, value=min(proposed, available), step=1,
-                                           key=f"rooms_{suffix}_{digest[:12]}")
-                choices[suffix] = selected
-                st.caption(f"{count} alunos · {available} turmas disponíveis · {capacity or '—'} vagas por turma")
+                st.metric(f"{period} · salas ocupadas", choices.get(suffix, 0))
+                st.caption(f"{count} alunos · {available} {'sala disponível' if available == 1 else 'salas disponíveis'} · {capacity or '—'} vagas por sala")
             else:
                 st.warning(f"Quantidade de turmas da {period.lower()} ausente ou inválida.")
 
@@ -172,7 +171,7 @@ with work_tab:
     with dash_tab:
         st.markdown("#### Distribuição por turma")
         st.bar_chart(room_table, x="Turma", y=["Meninas", "Meninos"], stack=True,
-                     color=["#14a5a4", "#f27055"], height=380, sort=False)
+                     color=["#3dbd9d", "#2b469a"], height=380, sort=False)
         st.dataframe(room_table, hide_index=True, width="stretch")
     with list_tab:
         result_table = output_table(result_bytes, "Ensalamento")
