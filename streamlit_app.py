@@ -12,6 +12,8 @@ import pandas as pd
 import streamlit as st
 from st_aggrid import AgGrid, DataReturnMode, GridOptionsBuilder, JsCode
 
+from pdf_report import build_distribution_report
+
 from app import OPTIONAL_RESOURCES, RESOURCES, format_sheet, inspect_workbook, make_result, room_choices_for_mode
 
 
@@ -107,19 +109,34 @@ def issue_guidance(message):
 
 
 def roster_editor(rows, issues, corrections=()):
+    record_by_line = {position: row[0] for position, row in enumerate(rows, 2)}
     attention_by_line = {}
     for issue in issues:
         match = re.match(r"Alunos, linhas? ([\d, ]+):", issue)
         if match:
-            level, message = friendly_issue(issue)
-            for line in re.findall(r"\d+", match.group(1)):
-                attention_by_line.setdefault(int(line), []).append(f"{level}: {issue_guidance(message)}")
+            lines = [int(line) for line in re.findall(r"\d+", match.group(1))]
+            records = [str(record_by_line[line]) for line in lines if line in record_by_line]
+            label = "registro" if len(records) == 1 else "registros"
+            reference = f"Alunos, {label} {', '.join(records)}:"
+            level, message = friendly_issue(reference + issue[match.end():])
+            for line in lines:
+                attention_by_line.setdefault(line, []).append(f"{level}: {issue_guidance(message)}")
     corrections_by_id = {}
+    rows_by_id = {row[0]: row for row in rows}
     for correction in corrections:
+        record = rows_by_id.get(correction.get("registro"))
+        column = 2 if correction["campo"] == "sexo" else 3
+        if record is None:
+            continue
+        current_value = EQUIVALENCES[correction["campo"]].get(normalize_token(record[column]))
+        if current_value != correction["corrigido"]:
+            continue
         field = "Sexo" if correction["campo"] == "sexo" else "Disponibilidade"
-        corrections_by_id.setdefault(correction["registro"], []).append(
-            f"Correção automática em {field}: {correction['original']} → {correction['corrigido']}. "
-            "Solução: confira o valor corrigido.")
+        message = (f"Correção automática em {field}: {correction['original']} → {correction['corrigido']}. "
+                   "Solução: confira o valor corrigido.")
+        messages = corrections_by_id.setdefault(correction["registro"], [])
+        if message not in messages:
+            messages.append(message)
     values = []
     for position, (record_id, name, sex, period) in enumerate(rows, 2):
         attention = attention_by_line.get(position, []) + corrections_by_id.get(record_id, [])
@@ -270,7 +287,8 @@ function(params) {
 }
 """))
     options.configure_grid_options(
-        context={"blankRow": blank_row, "nextRecordId": int(next_record_id)},
+        context={"blankRow": blank_row, "nextRecordId": int(next_record_id),
+                 "recordIds": [int(record_id) for record_id in frame["Registro"]]},
         getRowId=JsCode("function(params) { return params.data.__grid_key; }"),
         onCellClicked=JsCode("""
 function(params) {
@@ -328,7 +346,8 @@ function(params) {{
     result = AgGrid(
         data,
         gridOptions=options.build(),
-        data_return_mode=DataReturnMode.FILTERED_AND_SORTED,
+        # Custom row IDs are stable keys, not positional DataFrame indices.
+        data_return_mode=DataReturnMode.AS_INPUT,
         update_on=["cellValueChanged", "selectionChanged", "rowDataUpdated"],
         height=400,
         width="100%",
@@ -339,6 +358,20 @@ function(params) {{
         show_download_button=False,
         custom_css=grid_css,
         allow_unsafe_jscode=True,
+        callback=update_roster_draft,
+        server_sync_strategy="server_wins",
+        should_grid_return=JsCode("""
+function({streamlitRerunEventTriggerName, eventData}) {
+  if (streamlitRerunEventTriggerName !== 'rowDataUpdated') return true;
+  // Only additions made in the grid need a rerun; server refreshes are already validated.
+  const known = new Set(eventData.context.recordIds);
+  let added = false;
+  eventData.api.forEachNode(node => {
+    if (!node.rowPinned && node.data && !known.has(Number(node.data.Registro))) added = true;
+  });
+  return added;
+}
+"""),
         key=key,
     )
     edited = result["data"]
@@ -500,6 +533,15 @@ def merge_roster_editor(frame, existing_rows, deleted_ids=()):
     return merged
 
 
+def update_roster_draft(result):
+    """Capture edits before the rerun so validation uses the current grid data."""
+    frame = result["data"]
+    if not isinstance(frame, pd.DataFrame):
+        frame = pd.DataFrame(frame)
+    st.session_state.roster_draft_rows = merge_roster_editor(
+        frame, st.session_state.roster_draft_rows)
+
+
 def resources_from_editor(frame, existing_rows):
     def clean(value):
         return None if pd.isna(value) else value
@@ -633,74 +675,11 @@ def friendly_issue(issue):
     return level, text
 
 
-def report_pdf(title, stats, capacity_by_room, issues, students_total, adjusted=False):
-    """Create a small branded PDF using only the standard PDF and WinAnsi fonts."""
-    lines = [f"ABC Aprendiz · {title}",
-             "Distribuição ajustada manualmente" if adjusted else "Solução otimizada pelo modelo",
-             f"Total de alunos alocados: {students_total}", "", "Ocupação e composição por turma:"]
-    by_period = {"Manhã": [], "Tarde": []}
-    for room, count, girls, boys in stats:
-        period = "Manhã" if str(room).startswith("MANHÃ") else "Tarde"
-        capacity = capacity_by_room.get(room, 0)
-        ratio = (100 * girls / count) if count else 0
-        lines.append(f"{room} · {period}: {count}/{capacity} alunos · {girls} meninas ({ratio:.1f}%) · {boys} meninos")
-        by_period[period].append((count, ratio))
-    lines.extend(["", "Indicadores de equilíbrio:"])
-    for period, groups in by_period.items():
-        if groups:
-            sizes = [item[0] for item in groups]
-            ratios = [item[1] for item in groups]
-            lines.append(f"{period}: diferença de ocupação {max(sizes) - min(sizes)} aluno(s); "
-                         f"variação de meninas {max(ratios) - min(ratios):.1f} pontos percentuais.")
-    lines.extend(["", "Avisos e inconsistências:"])
-    lines.extend([f"{level}: {message}" for level, message in issues] or ["Nenhuma inconsistência encontrada."])
+def report_pdf(title, stats, capacity_by_room, issues, students_total, adjusted=False, roster=()):
+    """Create a styled summary and a detailed, paginated roster for each class."""
+    return build_distribution_report(
+        title, stats, capacity_by_room, issues, students_total, adjusted=adjusted, roster=roster)
 
-    pages, page_lines = [], []
-    for line in lines:
-        wrapped = [line[i:i + 88] for i in range(0, max(len(line), 1), 88)] or [""]
-        for fragment in wrapped:
-            page_lines.append(fragment)
-            if len(page_lines) == 48:
-                pages.append(page_lines)
-                page_lines = []
-    if page_lines:
-        pages.append(page_lines)
-
-    objects: list[bytes] = []
-    def add_object(value: bytes) -> int:
-        objects.append(value)
-        return len(objects)
-    catalog_id = add_object(b"")
-    pages_id = add_object(b"")
-    font_id = add_object(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")
-    page_ids = []
-    for page_number, page in enumerate(pages, 1):
-        commands = ["q 0.055 0.463 0.737 rg 0 780 595 62 re f Q",
-                    "BT /F1 16 Tf 42 810 Td (ABC Aprendiz) Tj ET",
-                    f"BT /F1 9 Tf 510 810 Td ({page_number}/{len(pages)}) Tj ET"]
-        y = 755
-        for line in page:
-            size = 12 if line in ("Ocupação e composição por turma:", "Indicadores de equilíbrio:",
-                                  "Avisos e inconsistências:") else 9
-            text = line.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
-            commands.append(f"BT /F1 {size} Tf 42 {y} Td ({text}) Tj ET")
-            y -= 14 if size == 12 else 12
-        stream = "\n".join(commands).encode("cp1252", errors="replace")
-        content_id = add_object(b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n" + stream + b"\nendstream")
-        page_id = add_object(f"<< /Type /Page /Parent {pages_id} 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 {font_id} 0 R >> >> /Contents {content_id} 0 R >>".encode())
-        page_ids.append(page_id)
-    objects[catalog_id - 1] = f"<< /Type /Catalog /Pages {pages_id} 0 R >>".encode()
-    objects[pages_id - 1] = f"<< /Type /Pages /Kids [{' '.join(f'{page_id} 0 R' for page_id in page_ids)}] /Count {len(page_ids)} >>".encode()
-    output = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
-    offsets = [0]
-    for i, obj in enumerate(objects, 1):
-        offsets.append(len(output))
-        output.extend(f"{i} 0 obj\n".encode() + obj + b"\nendobj\n")
-    xref = len(output)
-    output.extend(f"xref\n0 {len(objects) + 1}\n0000000000 65535 f \n".encode())
-    output.extend(b"".join(f"{offset:010d} 00000 n \n".encode() for offset in offsets[1:]))
-    output.extend(f"trailer\n<< /Size {len(objects) + 1} /Root {catalog_id} 0 R >>\nstartxref\n{xref}\n%%EOF".encode())
-    return bytes(output)
 
 
 def make_bytes(book):
@@ -784,17 +763,21 @@ with st.container(horizontal=True, horizontal_alignment="center"):
 
         work_tab, manual_tab = st.tabs(["Ensalamento", "Manual e ajuda"])
 
+        manual_text = Path(__file__).with_name("MANUAL_USUARIO.md").read_text(encoding="utf-8")
         manual_pdf = Path(__file__).with_name("MANUAL_USUARIO.pdf").read_bytes()
         show_manual = st.sidebar.toggle("Abrir manual ao lado", value=False, key="show_manual_pdf")
         if show_manual:
             st.sidebar.subheader("Manual completo")
-            st.sidebar.iframe(Path(__file__).with_name("MANUAL_USUARIO.pdf"), height=820,
-                              alt="Manual completo de ensalamento da ABC Aprendiz")
+            with st.sidebar.container(height=700, border=True):
+                st.markdown(manual_text)
+            st.sidebar.download_button(
+                "Baixar manual completo (.pdf)", manual_pdf,
+                file_name="Manual_Ensalamento_ABC.pdf", mime="application/pdf",
+                key="sidebar_manual_download")
 
         with manual_tab:
             with st.container(key="abc_manual", width=900):
-                manual = Path(__file__).with_name("MANUAL_USUARIO.md").read_text(encoding="utf-8")
-                st.markdown(manual)
+                st.markdown(manual_text)
                 st.download_button("Baixar manual (.pdf)", manual_pdf,
                                    file_name="Manual_Ensalamento_ABC.pdf", mime="application/pdf")
 
@@ -938,11 +921,19 @@ with st.container(horizontal=True, horizontal_alignment="center"):
 
                 st.subheader("Alunos")
                 st.caption("Atenção: vermelho indica erro, amarelo indica aviso e verde indica correção automática.")
+                st.caption("Os avisos identificam os alunos pelo número da coluna Registro.")
                 draft_base_rows = st.session_state.get(
                     "roster_draft_rows", [list(row) for row in committed_rows])
+                draft_validated_rows, draft_corrections = normalize_roster(draft_base_rows)
+                roster_check_book = workbook_with_rows(content, draft_validated_rows, draft_resources)
+                _, _, roster_issues, _ = inspect_entry(
+                    roster_check_book, draft_validated_rows, choices, draft_resources)
+                roster_check_book.close()
                 roster_key = f"abc_roster_{digest[:12]}_{st.session_state.editor_revision}"
                 roster_toolbar = st.empty()
-                editor_input = roster_editor(draft_base_rows, current_issues, effective_corrections)
+                editor_input = roster_editor(
+                    draft_base_rows, roster_issues,
+                    [*effective_corrections, *draft_corrections])
                 edited_students, selected_student_ids = student_grid(
                     editor_input, key=roster_key,
                     next_record_id=max((int(row[0]) for row in draft_base_rows), default=1) + 1,
@@ -1137,7 +1128,8 @@ with st.container(horizontal=True, horizontal_alignment="center"):
                                                export_room_table.to_csv(index=False).encode("utf-8-sig"),
                                                file_name=f"{name}_resumo.csv", mime="text/csv", width="stretch")
                             original_pdf = report_pdf("Relatório resumo da distribuição", stats, capacity_by_room,
-                                                      result_records, total, adjusted=False)
+                                                      result_records, total, adjusted=False,
+                                                      roster=output_table(result_bytes, "Ensalamento").itertuples(index=False, name=None))
                             c2.download_button("Baixar resumo da distribuição (PDF)", original_pdf,
                                                file_name=f"{name}_relatorio_otimizado.pdf", mime="application/pdf",
                                                width="stretch")
@@ -1381,6 +1373,8 @@ with st.container(horizontal=True, horizontal_alignment="center"):
                                                   for problem in manual_problems)]
                             adjusted_pdf = report_pdf("Relatório resumo da distribuição", manual_stats,
                                                       capacities, adjusted_records,
-                                                      sum(row[1] for row in manual_stats), adjusted=True)
+                                                      sum(row[1] for row in manual_stats), adjusted=True,
+                                                      roster=[(*student, adjusted.get(index))
+                                                              for index, student in enumerate(adjustment_students)])
                             st.download_button("Baixar relatório da distribuição ajustada (PDF)", adjusted_pdf,
                                                file_name=f"{name}_relatorio_ajustado.pdf", mime="application/pdf")
