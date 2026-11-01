@@ -120,8 +120,9 @@ class _Document:
             x += width
         self.y += 25
 
-    def table_row(self, values, widths, index):
-        wrapped = [_wrap(value, width - 18, 9) for value, width in zip(values, widths)]
+    def table_row(self, values, widths, index, wrapped=None):
+        if wrapped is None:
+            wrapped = [_wrap(value, width - 18, 9) for value, width in zip(values, widths)]
         height = max(26, max(map(len, wrapped)) * 13 + 12)
         if index % 2 == 0:
             self.rect(42, self.y, WIDTH, height, PALE)
@@ -227,12 +228,22 @@ def build_distribution_report(title, stats, capacity_by_room, issues, students_t
             document.y += 18
             document.paragraph('Nenhum aluno alocado nesta turma.', color=MUTED)
         for index, (name, sex, period, _) in enumerate(members, 1):
-            # Keep wrapped names together and repeat headers on continuation pages.
-            height = max(26, len(_wrap(name, widths[1] - 18, 9)) * 13 + 12)
+            wrapped = [_wrap(value, width - 18, 9)
+                       for value, width in zip([index, name, sex, period], widths)]
+            height = max(26, max(map(len, wrapped)) * 13 + 12)
             if document.y + height > BOTTOM:
                 document.page(title, subtitle, continued=True)
                 document.table_header(labels, widths)
-            document.table_row([index, name, sex, period], widths, index - 1)
+            # Exceptionally long rows continue across pages, with the same columns.
+            offset = 0
+            while offset < max(map(len, wrapped)):
+                if document.y + 26 > BOTTOM:
+                    document.page(title, subtitle, continued=True)
+                    document.table_header(labels, widths)
+                limit = int((BOTTOM - document.y - 12) // 13)
+                fragment = [lines[offset:offset + limit] for lines in wrapped]
+                document.table_row([], widths, index - 1, wrapped=fragment)
+                offset += limit
 
     for room, count, girls, boys in stats:
         capacity = capacity_by_room.get(room, 0)

@@ -14,7 +14,9 @@ from st_aggrid import AgGrid, DataReturnMode, GridOptionsBuilder, JsCode
 
 from pdf_report import build_distribution_report
 
-from app import OPTIONAL_RESOURCES, RESOURCES, format_sheet, inspect_workbook, make_result, room_choices_for_mode
+from app import (OPTIONAL_RESOURCES, RESOURCES, format_sheet, inspect_workbook,
+                 invisible_characters, load_input_workbook, make_result,
+                 protect_excel_text, room_choices_for_mode)
 
 
 st.set_page_config(page_title="ABC Aprendiz · Ensalamento",
@@ -55,12 +57,18 @@ def workbook_with_rows(content, rows, resources=None):
     book = load_workbook(BytesIO(content))
     if "Alunos" in book:
         sheet = book["Alunos"]
+        formulas = {(row, col): sheet.cell(row, col).value
+                    for row in range(2, sheet.max_row + 1) for col in (1, 2, 3)
+                    if sheet.cell(row, col).data_type == "f"}
         for row in range(2, sheet.max_row + 1):
             for col in (1, 2, 3):
                 sheet.cell(row, col).value = None
         for excel_row, record in enumerate(rows, 2):
             for col, value in enumerate(record[1:4], 1):
                 sheet.cell(excel_row, col).value = value
+                if isinstance(value, str):
+                    sheet.cell(excel_row, col).data_type = (
+                        "f" if formulas.get((record[0], col)) == value else "s")
     if resources is not None and "Turmas" in book:
         sheet = book["Turmas"]
         for row in range(2, sheet.max_row + 1):
@@ -74,6 +82,8 @@ def workbook_with_rows(content, rows, resources=None):
 
 def issue_guidance(message):
     """Add a concise next step to a validation message without changing exports."""
+    if any(word in normalize_token(message) for word in ("contem uma formula", "caracteres invisiveis")):
+        return str(message)
     prefix, separator, detail = str(message).partition(": ")
     if not separator:
         prefix, detail = "", str(message)
@@ -603,6 +613,8 @@ def normalize_roster(rows):
         record = list(row)
         for column, field in ((2, "sexo"), (3, "disponibilidade")):
             value = record[column]
+            if invisible_characters(value):
+                continue
             replacement = EQUIVALENCES[field].get(normalize_token(value))
             if replacement is not None and value != replacement:
                 corrections.append({"registro": record[0], "linha": position, "campo": field,
@@ -638,7 +650,7 @@ def friendly_issue(issue):
     level = "Erro" if any(word in lower for word in (
         "invalido", "ausente", "precisa ser", "desconhecido", "repetido", "cabecalhos",
         "faltam", "sao necessarias as abas", "nenhum aluno valido", "bloqueio", "registro vazio",
-        "configuracao vazia")) else level
+        "configuracao vazia", "contem uma formula", "caracteres invisiveis")) else level
     if "registro vazio" in lower:
         return "Erro", text.replace("registro vazio; preencha o registro ou exclua-o com confirmação.",
                                     "este registro está vazio; preencha nome, sexo e disponibilidade ou exclua-o com confirmação.")
@@ -684,6 +696,7 @@ def report_pdf(title, stats, capacity_by_room, issues, students_total, adjusted=
 
 def make_bytes(book):
     buffer = BytesIO()
+    protect_excel_text(book)
     book.save(buffer)
     return buffer.getvalue()
 
@@ -810,7 +823,7 @@ with st.container(horizontal=True, horizontal_alignment="center"):
             content = uploaded.getvalue()
             digest = hashlib.sha256(content).hexdigest()
             try:
-                book = load_workbook(BytesIO(content), data_only=True)
+                book = load_input_workbook(content)
             except Exception as exc:
                 st.error(f"Não foi possível abrir a planilha. Verifique se é um .xlsx válido: {exc}")
                 st.stop()

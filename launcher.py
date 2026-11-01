@@ -51,6 +51,9 @@ def acquire_mutex():
     if os.name != "nt":
         return None, True
     kernel = ctypes.windll.kernel32
+    kernel.CreateMutexW.argtypes = [ctypes.c_void_p, ctypes.c_bool, ctypes.c_wchar_p]
+    kernel.CreateMutexW.restype = ctypes.c_void_p
+    kernel.CloseHandle.argtypes = [ctypes.c_void_p]
     handle = kernel.CreateMutexW(None, True, MUTEX_NAME)
     if not handle:
         return None, False
@@ -75,6 +78,7 @@ def run_server_child():
     from streamlit.web.cli import main as streamlit_main
 
     sys.argv = ["streamlit", "run", str(app),
+                "--global.developmentMode=false",
                 "--server.address=127.0.0.1", f"--server.port={PORT}",
                 "--server.headless=true", "--server.fileWatcherType=none",
                 "--browser.gatherUsageStats=false"]
@@ -130,8 +134,13 @@ def launch():
     started = time.monotonic()
     try:
         if probe_server() == "unavailable":
+            environment = os.environ.copy()
+            if getattr(sys, "frozen", False):
+                # The server outlives this launcher and needs its own ONEFILE extraction.
+                environment["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
             child = subprocess.Popen(
-                child_command(), cwd=str(base_directory()), stdin=subprocess.DEVNULL,
+                child_command(), cwd=str(Path(sys.executable).parent if getattr(sys, "frozen", False)
+                                         else base_directory()), env=environment, stdin=subprocess.DEVNULL,
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                 creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
 
@@ -179,6 +188,10 @@ def launch():
 
 
 if __name__ == "__main__":
+    if sys.stdout is None:
+        sys.stdout = open(os.devnull, "w", encoding="utf-8")
+    if sys.stderr is None:
+        sys.stderr = open(os.devnull, "w", encoding="utf-8")
     if "--streamlit-child" in sys.argv:
         run_server_child()
     else:

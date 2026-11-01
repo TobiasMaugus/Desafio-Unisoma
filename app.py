@@ -22,6 +22,34 @@ def plain(value):
                    if not unicodedata.combining(c))
 
 
+def load_input_workbook(content):
+    """Keep personal-field formulas identifiable, without evaluating any formula."""
+    book = load_workbook(BytesIO(content), data_only=True)
+    source = load_workbook(BytesIO(content), data_only=False)
+    if "Alunos" in source:
+        for row in source["Alunos"].iter_rows(min_row=2, max_col=3):
+            for cell in row:
+                if cell.data_type == "f":
+                    book["Alunos"][cell.coordinate].value = cell.value
+    source.close()
+    return book
+
+
+def invisible_characters(value):
+    return sorted({f"U+{ord(char):04X}" for char in str(value)
+                   if unicodedata.category(char) in ("Cf", "Cc")})
+
+
+def protect_excel_text(book):
+    """Preserve user strings literally, including =, +, -, @ and original formulas."""
+    for area, columns in (("Alunos", 3), ("Turmas", 2), ("Ensalamento", 4)):
+        if area in book:
+            for row in book[area].iter_rows(min_row=2, max_col=columns):
+                for cell in row:
+                    if isinstance(cell.value, str):
+                        cell.data_type = "s"
+
+
 def letter(index):
     result = ""
     while index:
@@ -45,9 +73,10 @@ def room_choices_for_mode(students, resources, allow_empty):
     for period, suffix in (("Manhã", "manha"), ("Tarde", "tarde")):
         available = resources.get(f"turmas_{suffix}")
         capacity = resources.get(f"vagas_{suffix}")
-        if available and capacity:
+        if available is not None and capacity:
             count = sum(student[2] == period for student in students)
-            choices[suffix] = min(available, (count + capacity - 1) // capacity) if allow_empty else available
+            choices[suffix] = (min(available, (count + capacity - 1) // capacity)
+                               if allow_empty or count == 0 else available)
     return choices
 
 
@@ -70,16 +99,30 @@ def inspect_workbook(book, room_choices=None):
             issues.append(f"Alunos, linha {row}: rodapé 'Total' ignorado.")
             continue
         errors = []
-        if not isinstance(name, str) or not name.strip():
+        invalid_fields = set()
+        for column, field, guidance in (
+                (1, "Nome", "Substitua pelo nome do aluno."),
+                (2, "Sexo", "Substitua por M ou F."),
+                (3, "Disponibilidade", "Substitua por Manhã ou Tarde.")):
+            cell = sheet.cell(row, column)
+            if cell.data_type == "f":
+                errors.append(f"A célula {cell.coordinate} contém uma fórmula no campo {field}. {guidance}")
+                invalid_fields.add(field)
+            elif invisible_characters(cell.value):
+                codes = ", ".join(invisible_characters(cell.value))
+                errors.append(f"A célula {cell.coordinate} contém caracteres invisíveis ou de controle ({codes}) "
+                              f"no campo {field}. Remova esses caracteres e confira o valor {cell.value!r}")
+                invalid_fields.add(field)
+        if "Nome" not in invalid_fields and (not isinstance(name, str) or not name.strip()):
             errors.append("nome ausente ou inválido")
         canonical_sex = {"f": "F", "feminino": "F", "m": "M", "masculino": "M"}.get(plain(sex))
-        if not canonical_sex:
+        if "Sexo" not in invalid_fields and not canonical_sex:
             errors.append(f"sexo inválido ({sex!s})")
         canonical_period = {"manha": "Manhã", "tarde": "Tarde"}.get(plain(period))
-        if not canonical_period:
+        if "Disponibilidade" not in invalid_fields and not canonical_period:
             errors.append(f"disponibilidade inválida ({period!s})")
         if errors:
-            issues.append(f"Alunos, linha {row}: " + "; ".join(errors) + ".")
+            issues.append(f"Alunos, linha {row}: " + "; ".join(errors).rstrip(".") + ".")
             blocking = True
             continue
         if sex != canonical_sex or period != canonical_period or name != name.strip():
@@ -109,7 +152,10 @@ def inspect_workbook(book, room_choices=None):
         elif key in resources:
             issues.append(f"Turmas, linha {row}: recurso {key} repetido.")
             blocking = True
-        elif isinstance(amount, bool) or not isinstance(amount, (int, float)) or not float(amount).is_integer() or amount <= 0:
+        elif (isinstance(amount, bool) or not isinstance(amount, (int, float))
+              or not float(amount).is_integer() or amount < 0
+              or (amount == 0 and not (key in ("turmas_manha", "turmas_tarde")
+                  and not any(student[2] == ("Manhã" if key == "turmas_manha" else "Tarde") for student in students)))):
             issues.append(f"Turmas, linha {row}: {key} precisa ser inteiro positivo.")
             blocking = True
         else:
@@ -211,11 +257,12 @@ def make_result(book, room_choices=None):
     sheet = book.create_sheet("Inconsistências")
     sheet.append(("Situação", "Descrição"))
     for issue in issues:
-        sheet.append(("Bloqueio" if blocking and ("inválid" in issue or "ausente" in issue or "precisa" in issue or "desconhecido" in issue or "repetido" in issue or "cabeçalhos" in issue or "faltam" in issue) else "Aviso", issue))
+        sheet.append(("Bloqueio" if blocking and ("inválid" in issue or "ausente" in issue or "precisa" in issue or "desconhecido" in issue or "repetido" in issue or "cabeçalhos" in issue or "faltam" in issue or "fórmula" in issue or "caracteres invisíveis" in issue) else "Aviso", issue))
     if not issues:
         sheet.append(("OK", "Nenhuma inconsistência encontrada."))
     format_sheet(sheet, {"A": 16, "B": 100})
     output = BytesIO()
+    protect_excel_text(book)
     book.save(output)
     return output.getvalue(), blocking, issues, stats
 
