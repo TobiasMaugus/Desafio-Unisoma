@@ -215,6 +215,7 @@ def student_grid(frame, *, key, next_record_id, theme_type=None):
         ("#F5F7F9", "#EDF2F6", "#CFD9E2", "#23364B", "#23364B")
     )
     grid_css = {
+        ".grid-toolbar": {"opacity": "1", "visibility": "visible"},
         ".ag-theme-streamlit": {
             "--ag-background-color": base_bg,
             "--ag-foreground-color": text_color,
@@ -363,7 +364,7 @@ function(params) {{
         width="100%",
         fit_columns_on_grid_load=False,
         theme="streamlit",
-        show_toolbar=False,
+        show_toolbar=True,
         show_search=False,
         show_download_button=False,
         custom_css=grid_css,
@@ -935,6 +936,7 @@ with st.container(horizontal=True, horizontal_alignment="center"):
                 st.subheader("Alunos")
                 st.caption("Atenção: vermelho indica erro, amarelo indica aviso e verde indica correção automática.")
                 st.caption("Os avisos identificam os alunos pelo número da coluna Registro.")
+                st.caption("Para ampliar a tabela e ler a coluna Atenção, use o botão de tela cheia na barra da tabela.")
                 draft_base_rows = st.session_state.get(
                     "roster_draft_rows", [list(row) for row in committed_rows])
                 draft_validated_rows, draft_corrections = normalize_roster(draft_base_rows)
@@ -1091,7 +1093,8 @@ with st.container(horizontal=True, horizontal_alignment="center"):
                                        file_name=f"{name}_inconsistencias.xlsx",
                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                 else:
-                    if st.session_state.get("result_signature") != signature:
+                    result_current = st.session_state.get("result_signature") == signature
+                    if not result_current:
                         previous_mode = "somente as necessárias" if st.session_state.get("result_room_mode") else "todas as turmas disponíveis"
                         current_mode = st.session_state.room_mode_choice.casefold()
                         st.warning(f"O resultado exibido foi calculado usando {previous_mode}. A opção atual é {current_mode}; recalcule ao final da página para atualizar a distribuição.")
@@ -1130,22 +1133,26 @@ with st.container(horizontal=True, horizontal_alignment="center"):
                                      alt="Quantidade de meninas e meninos em cada turma")
 
                     with st.container(key="abc_downloads"):
+                        if not result_current:
+                            st.info("Clique em Recalcular ensalamento após escolher as salas para liberar os downloads da opção atual.")
                         st.download_button("Baixar Excel completo (.xlsx)", result_bytes,
                                            file_name=f"{name}_resultado.xlsx",
                                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                           type="primary", width="stretch")
+                                           type="primary", width="stretch", disabled=not result_current,
+                                           on_click="ignore")
                         st.caption("O Excel inclui as abas de entrada, o ensalamento e as inconsistências.")
                         with st.expander("Outros formatos de download", expanded=False):
                             c1, c2 = st.columns(2)
                             c1.download_button("Baixar resumo por turma (.csv)",
                                                export_room_table.to_csv(index=False).encode("utf-8-sig"),
-                                               file_name=f"{name}_resumo.csv", mime="text/csv", width="stretch")
+                                               file_name=f"{name}_resumo.csv", mime="text/csv", width="stretch",
+                                               disabled=not result_current, on_click="ignore")
                             original_pdf = report_pdf("Relatório resumo da distribuição", stats, capacity_by_room,
                                                       result_records, total, adjusted=False,
                                                       roster=output_table(result_bytes, "Ensalamento").itertuples(index=False, name=None))
                             c2.download_button("Baixar resumo da distribuição (PDF)", original_pdf,
                                                file_name=f"{name}_relatorio_otimizado.pdf", mime="application/pdf",
-                                               width="stretch")
+                                               width="stretch", disabled=not result_current, on_click="ignore")
 
                     st.divider()
                     st.subheader("Quer usar menos salas?")
@@ -1155,9 +1162,10 @@ with st.container(horizontal=True, horizontal_alignment="center"):
                     all_col, minimum_col = st.columns(2, gap="large")
                     with all_col.container(
                             key="abc_mode_all_selected" if st.session_state.room_mode_choice == all_rooms else "abc_mode_all",
-                            border=True, gap="small"):
+                            border=True, gap="small", height="stretch"):
                         st.subheader("Todas as salas disponíveis")
                         st.caption("Mantém todas as salas disponíveis na distribuição.")
+                        st.space("stretch")
                         if st.button("Selecionado" if st.session_state.room_mode_choice == all_rooms else "Usar todas as salas",
                                      key="choose_all_rooms", type="primary" if st.session_state.room_mode_choice == all_rooms else "secondary",
                                      width="stretch", disabled=st.session_state.room_mode_choice == all_rooms):
@@ -1165,9 +1173,10 @@ with st.container(horizontal=True, horizontal_alignment="center"):
                             st.rerun()
                     with minimum_col.container(
                             key="abc_mode_minimum_selected" if st.session_state.room_mode_choice == minimum_rooms else "abc_mode_minimum",
-                            border=True, gap="small"):
+                            border=True, gap="small", height="stretch"):
                         st.subheader("Somente as salas necessárias")
                         st.caption("Usa o menor número de salas que comporta os alunos; a diferença entre turmas fica em até um aluno por turno.")
+                        st.space("stretch")
                         if st.button("Selecionado" if st.session_state.room_mode_choice == minimum_rooms else "Usar somente as salas necessárias",
                                      key="choose_minimum_rooms", type="primary" if st.session_state.room_mode_choice == minimum_rooms else "secondary",
                                      width="stretch", disabled=st.session_state.room_mode_choice == minimum_rooms):
@@ -1217,7 +1226,7 @@ with st.container(horizontal=True, horizontal_alignment="center"):
                             st.dataframe(result_table, hide_index=True, width="stretch", height=500)
                     with adjustments_tab:
                         st.subheader("Ajustes manuais da distribuição")
-                        st.caption("Use esta área somente se precisar alterar a solução otimizada. As mudanças podem afetar o equilíbrio entre turmas.")
+                        st.error("Use esta área somente se precisar alterar a solução otimizada. As mudanças podem afetar o equilíbrio entre turmas.", icon=":material/warning:")
                         base_table = output_table(result_bytes, "Ensalamento")
                         original_assignments = {i: row[3] for i, row in enumerate(base_table.itertuples(index=False, name=None))}
                         adjustment_students = [tuple(row[:3]) for row in base_table.itertuples(index=False, name=None)]
@@ -1378,8 +1387,8 @@ with st.container(horizontal=True, horizontal_alignment="center"):
                         st.download_button("Baixar ensalamento ajustado", adjusted_bytes,
                                            file_name=adjusted_filename,
                                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                           disabled=any("excede a capacidade" in problem or "outro turno" in problem
-                                                        for problem in manual_problems))
+                                           disabled=not result_current or any("excede a capacidade" in problem or "outro turno" in problem
+                                                        for problem in manual_problems), on_click="ignore")
                         if changed(adjusted, original_assignments):
                             adjusted_records = [*result_records,
                                                 *(('Aviso', f"Distribuição ajustada: {problem}")
@@ -1390,4 +1399,5 @@ with st.container(horizontal=True, horizontal_alignment="center"):
                                                       roster=[(*student, adjusted.get(index))
                                                               for index, student in enumerate(adjustment_students)])
                             st.download_button("Baixar relatório da distribuição ajustada (PDF)", adjusted_pdf,
-                                               file_name=f"{name}_relatorio_ajustado.pdf", mime="application/pdf")
+                                               file_name=f"{name}_relatorio_ajustado.pdf", mime="application/pdf",
+                                               disabled=not result_current, on_click="ignore")

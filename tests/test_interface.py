@@ -60,6 +60,40 @@ def synthetic():
     return buffer.getvalue()
 
 
+def test_downloads_follow_recalculated_room_choice(monkeypatch):
+    """Exports must never offer the previous distribution as the selected mode."""
+    exports = {}
+    original_download = st.download_button
+
+    def capture(label, data, *args, **kwargs):
+        exports[label] = (data, kwargs)
+        return original_download(label, data, *args, **kwargs)
+
+    monkeypatch.setattr(st, 'download_button', capture)
+    content = synthetic()
+    instance = upload(launch(), content)
+    next(button for button in instance.button if button.label == 'Gerar ensalamento').click().run()
+    for key, expected_rooms in ((None, 4), ('choose_minimum_rooms', 3), ('choose_all_rooms', 4)):
+        if key:
+            instance.button(key=key).click().run()
+            assert exports['Baixar Excel completo (.xlsx)'][1]['disabled']
+            assert exports['Baixar ensalamento ajustado'][1]['disabled']
+            instance.button(key='recalculate_room_mode').click().run()
+        assert not instance.exception
+        data, options = exports['Baixar Excel completo (.xlsx)']
+        assert not options['disabled'] and options['on_click'] == 'ignore'
+        assert data == instance.session_state['result'][0]
+        book = load_workbook(BytesIO(data))
+        rows = list(book['Ensalamento'].values)
+        assert rows[0] == ('Nome', 'Sexo', 'Disponibilidade', 'Turma')
+        assert len(rows) == 7
+        assert len({row[3] for row in rows[1:]}) == expected_rooms
+        assert {row[:3] for row in rows[1:]} == set(load_workbook(BytesIO(content))['Alunos'].values) - {rows[0][:3]}
+        book.close()
+        instance.run()
+        assert instance.session_state['result'][0] == data
+
+
 @pytest.mark.parametrize('number', (1,2,3,4))
 @pytest.mark.parametrize('allow_empty', (False,True))
 def test_official_output_matches_before_refactor(number, allow_empty, monkeypatch):
