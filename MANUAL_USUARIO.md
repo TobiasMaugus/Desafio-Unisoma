@@ -1,4 +1,4 @@
-# Manual do usuário — ABC Aprendiz
+# Manual do usuário - ABC Aprendiz
 
 Organização de turmas · UniSoma 2026
 
@@ -6,7 +6,14 @@ Organização de turmas · UniSoma 2026
 
 O aplicativo organiza alunos em turmas da manhã e da tarde. Ele respeita o turno de cada aluno e as vagas disponíveis, mantém a diferença de tamanho entre turmas ocupadas do mesmo turno em até um aluno e busca equilibrar a proporção de meninas e meninos.
 
-O caminho é: **selecionar a planilha → conferir e salvar os dados → gerar o ensalamento → escolher as salas → conferir e baixar o resultado**. Ajustes manuais são opcionais.
+A tela de trabalho está organizada em quatro etapas, identificadas por números coloridos:
+
+1. **Vamos começar pela planilha:** envie o arquivo de alunos e turmas.
+2. **Confira os dados e gere as turmas:** revise os cadastros, salve as correções e gere a primeira distribuição.
+3. **Quer usar menos salas?:** escolha como usar as salas, recalcule quando necessário e consulte os alunos. Os ajustes manuais são opcionais.
+4. **Confira e baixe o resultado:** confira o resumo e baixe o Excel completo ou o relatório em PDF.
+
+A escolha de salas aparece antes dos downloads finais. Em telas menores, alguns elementos ficam um abaixo do outro para facilitar a leitura. O menu no canto superior direito permite escolher o tema claro ou escuro.
 
 1. Abra o aplicativo. Na versão executável, dê dois cliques em **ABC_Aprendiz.exe**, aguarde a tela de carregamento e a abertura do navegador.
 2. Use a aba **Ensalamento** para trabalhar.
@@ -38,20 +45,22 @@ As colunas são **Recursos** e **Quantidade**. Preencha os quatro recursos:
 
 Exemplo: para três salas da manhã com vinte vagas em cada uma, informe **turmas_manha = 3** e **vagas_manha = 20**. Isso representa sessenta vagas pela manhã.
 
-Em **1. Selecionar planilha**, clique no campo de envio ou arraste o arquivo para ele. Aguarde a exibição das tabelas. Se o arquivo não abrir, confirme que é um .xlsx válido com as abas e os cabeçalhos exigidos.
+Em **1. Vamos começar pela planilha**, clique no campo de envio ou arraste o arquivo para ele. As orientações de preenchimento ficam próximas ao campo de envio. Aguarde a exibição das tabelas. Se o arquivo não abrir, confirme que é um .xlsx válido com as abas e os cabeçalhos exigidos.
 
 ## 3. Confira os dados e as correções automáticas
 
-Em **2. Conferir dados e gerar o ensalamento**, revise **Turmas e capacidades** e **Alunos**.
+Em **2. Confira os dados e gere as turmas**, revise **Turmas e capacidades** e **Alunos**.
 
 1. Confira a quantidade de salas e as vagas por sala em cada turno.
 2. Confira nome, sexo e disponibilidade dos alunos.
-3. Leia a coluna **Atenção**. Vermelho indica erro; amarelo, aviso; verde, correção automática. O símbolo **—** indica ausência de apontamento naquele registro.
-4. Para ampliar a tabela de alunos, use o botão de **tela cheia** na barra da tabela. Use o mesmo botão para voltar. Se necessário, deslize a barra horizontal até **Atenção** e aumente a largura da coluna arrastando a borda do cabeçalho.
+3. Leia a coluna **Atenção**. Vermelho indica erro; amarelo, aviso; verde, correção automática. Quando não há mensagem nessa coluna, o registro não tem apontamentos.
+4. Use a **barra horizontal no rodapé da tabela de alunos** para deslocar as colunas para a direita ou para a esquerda. Ela permite consultar a coluna **Atenção** sem reduzir o espaço de nomes e mensagens.
+5. Use a **barra vertical à direita da tabela** para percorrer os alunos. As duas barras ficam visíveis na tabela. O deslocamento vertical permite ver outros registros quando a lista ultrapassa a altura disponível.
+6. Para ampliar a tabela, use o botão de **tela cheia** na barra da tabela. Use o mesmo botão para voltar. Para aumentar uma coluna, arraste a borda do cabeçalho.
 
 Os avisos dos alunos usam o número da coluna **Registro**. Esse número identifica o cadastro, mesmo após a exclusão de outras linhas; ele não é a posição atual da linha na tela. Os apontamentos são atualizados conforme as edições.
 
-O aplicativo padroniza algumas formas de escrita, por exemplo **feminino → F**, **masculino → M** e **manha → Manhã**. As normalizações reconhecidas ficam indicadas como correções automáticas, com os valores originais e corrigidos no relatório. Valores desconhecidos, fórmulas e caracteres invisíveis apontados como erro exigem revisão.
+O aplicativo padroniza algumas formas de escrita. Por exemplo, **feminino** passa a **F**, **masculino** passa a **M** e **manha** passa a **Manhã**. As normalizações reconhecidas ficam indicadas como correções automáticas, com os valores originais e corrigidos no relatório. Valores desconhecidos, fórmulas e caracteres invisíveis apontados como erro exigem revisão.
 
 ## 4. Edite, adicione ou exclua dados
 
@@ -80,7 +89,13 @@ Enquanto houver edições não salvas, o resultado anterior fica oculto. Salvar 
 1. Corrija os erros vermelhos e salve as alterações nas duas tabelas.
 2. Clique em **Gerar ensalamento** e aguarde a conclusão.
 3. Leia as mensagens e o **Relatório geral de erros e avisos**, quando disponível.
-4. Em **3. Consultar e baixar o resultado**, confira os totais e o resumo por turma.
+4. Confira as opções da etapa **3. Quer usar menos salas?**. O resumo e os downloads ficam na etapa **4. Confira e baixe o resultado**.
+
+A mensagem de conclusão usa as seguintes cores:
+
+- **Verde:** o ensalamento foi gerado sem avisos. Se houver correções automáticas, confira também os valores corrigidos.
+- **Amarelo:** o ensalamento foi gerado, mas há avisos que precisam de atenção. Leia o relatório antes de usar o resultado.
+- **Vermelho:** o ensalamento foi bloqueado por erros. Corrija e salve os dados antes de tentar novamente.
 
 A primeira distribuição usa **Todas as salas disponíveis**. Em turno sem alunos, não há turma ocupada. Se houver alunos, mas menos alunos do que salas na configuração inicial, confira o relatório e ajuste a quantidade de salas disponíveis na tabela antes de gerar novamente.
 
@@ -88,7 +103,7 @@ Erros bloqueantes impedem a geração. Nesse caso, use **Gerar relatório de inc
 
 ## 6. Escolha como usar as salas
 
-Após gerar o resultado, localize **Quer usar menos salas?**. Há duas opções:
+Após gerar o resultado, localize a etapa **3. Quer usar menos salas?**, antes da área de downloads finais. Há duas opções:
 
 - **Todas as salas disponíveis:** utiliza as salas disponíveis de cada turno com alunos.
 - **Somente as salas necessárias:** utiliza o menor número de salas que comporta os alunos de cada turno, dentro das salas disponíveis.
@@ -106,13 +121,14 @@ Nas duas opções, o aplicativo respeita as vagas e mantém a diferença entre t
 
 ## 7. Consulte e baixe o resultado
 
-Confira **Alunos alocados**, **Turmas ocupadas** e **Resumo por turma**. O resumo informa alunos, vagas, vagas restantes, meninas, meninos e percentuais. Abra **Ver gráfico por turma** para visualizar a distribuição.
+Na etapa **4. Confira e baixe o resultado**, confira **Alunos alocados**, **Turmas ocupadas** e **Resumo por turma**. O resumo informa alunos, vagas, vagas restantes, meninas, meninos e percentuais. Abra **Ver gráfico por turma** para visualizar a distribuição.
 
-Na aba **Lista de alunos**, use **Buscar aluno** para localizar um nome ou parte dele e **Turno** para filtrar manhã ou tarde. Esses filtros servem para consulta; não retiram alunos do ensalamento exportado.
+Na etapa 3, abra a aba **Lista de alunos**, use **Buscar aluno** para localizar um nome ou parte dele e **Turno** para filtrar manhã ou tarde. Esses filtros servem para consulta; não retiram alunos do ensalamento exportado.
+
+Os dois botões de download ficam lado a lado na etapa 4, abaixo do resumo e do gráfico. Em telas estreitas, podem aparecer um abaixo do outro.
 
 - **Baixar Excel completo (.xlsx):** exporta o resultado otimizado vigente, com as abas de entrada, **Ensalamento** e **Inconsistências**. A aba Ensalamento contém **Nome**, **Sexo**, **Disponibilidade** e **Turma**.
-- **Outros formatos de download → Baixar resumo por turma (.csv):** exporta os totais e percentuais por turma.
-- **Outros formatos de download → Baixar resumo da distribuição (PDF):** exporta o resumo, os apontamentos e as listas de alunos separadas por turma, com continuação em outras páginas quando necessário.
+- **Baixar resumo da distribuição (PDF):** exporta o resumo, os apontamentos e as listas de alunos separadas por turma, com continuação em outras páginas quando necessário.
 - **Baixar planilha atualizada:** na seção de conferência, exporta o cadastro salvo para uso posterior. Esse arquivo não substitui o download do resultado do ensalamento.
 
 Os downloads do resultado otimizado continuam representando a solução calculada. Para levar alterações feitas em **Ajustes avançados**, use os botões específicos de resultado ajustado descritos a seguir.
@@ -161,6 +177,8 @@ Confira todos os avisos antes de usar o arquivo. Se o ajuste deixar problemas, c
 - **Salas demais para o número de alunos na primeira geração:** revise a quantidade disponível por turno na tabela, salve e gere novamente.
 - **Falta de vagas:** confira a quantidade de salas e as vagas reais por sala; corrija o cadastro conforme a disponibilidade real.
 - **Resultado oculto:** há edições pendentes. Salve ou descarte as alterações na tabela correspondente.
+- **Coluna Atenção fora da área visível:** arraste a barra horizontal no rodapé da tabela de alunos para a direita. Para voltar aos nomes, arraste para a esquerda.
+- **Aluno fora da área visível da tabela de entrada:** use a barra vertical à direita da tabela. A busca por nome fica na Lista de alunos do resultado, na etapa 3.
 - **Download indisponível após mudar as salas:** clique em Recalcular ensalamento e aguarde a conclusão.
 - **Falha no cálculo:** confira os dados e a mensagem apresentada. Se persistir, guarde a planilha e a mensagem para solicitar suporte.
 

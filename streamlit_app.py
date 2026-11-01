@@ -1,6 +1,7 @@
 """Interface local do ensalamento da ABC Aprendiz."""
 
 from io import BytesIO
+from html import escape
 from pathlib import Path
 import hashlib
 import json
@@ -23,6 +24,11 @@ st.set_page_config(page_title="ABC Aprendiz · Ensalamento",
                    page_icon=str(Path(__file__).with_name("abc-logo-1024x798.webp")),
                    layout="wide")
 st.html(Path(__file__).parent / "assets" / "interface.css")
+
+
+def step_heading(number, title):
+    st.html(f'<h2 class="abc-step-heading"><span class="abc-step-number abc-step-{number}">'
+            f'{number}</span><span>{escape(title)}</span></h2>')
 
 
 def output_table(content, sheet_name):
@@ -263,6 +269,22 @@ def student_grid(frame, *, key, next_record_id, theme_type=None):
             "background-color": add_row_colors[0],
             "color": add_row_colors[1],
         },
+        ".ag-body-horizontal-scroll-viewport": {"overflow-x": "scroll !important"},
+        ".ag-body-vertical-scroll-viewport": {"overflow-y": "scroll !important"},
+        ".ag-body-horizontal-scroll-viewport, .ag-body-vertical-scroll-viewport": {
+            "scrollbar-width": "auto",
+            "scrollbar-color": f"{text_color} {header_bg}",
+        },
+        ".ag-body-horizontal-scroll-viewport::-webkit-scrollbar, .ag-body-vertical-scroll-viewport::-webkit-scrollbar": {
+            "width": "14px", "height": "14px",
+        },
+        ".ag-body-horizontal-scroll-viewport::-webkit-scrollbar-thumb, .ag-body-vertical-scroll-viewport::-webkit-scrollbar-thumb": {
+            "background-color": text_color, "border-radius": "7px",
+            "border": f"3px solid {header_bg}",
+        },
+        ".ag-body-horizontal-scroll-viewport::-webkit-scrollbar-track, .ag-body-vertical-scroll-viewport::-webkit-scrollbar-track": {
+            "background-color": header_bg,
+        },
     }
     data = frame.copy()
     data["__grid_key"] = [f"aluno-{record_id}" for record_id in data["Registro"]]
@@ -288,10 +310,10 @@ function(params) {{
     )
     options.configure_column("__grid_key", hide=True, editable=False)
     options.configure_column("Registro", editable=False, width=76, minWidth=68)
-    options.configure_column("Nome", editable=True, flex=2.7, minWidth=220)
+    options.configure_column("Nome", editable=True, width=320, minWidth=220)
     options.configure_column("Sexo", editable=True, width=72, minWidth=64)
-    options.configure_column("Disponibilidade", editable=True, flex=1.3, minWidth=150)
-    options.configure_column("Atenção", editable=False, flex=1.8, minWidth=250,
+    options.configure_column("Disponibilidade", editable=True, width=160, minWidth=140)
+    options.configure_column("Atenção", editable=False, width=2000, minWidth=1300,
                              cellRenderer=JsCode("""
 function(params) {
   return params.node.rowPinned === 'bottom' ? '+' : params.value;
@@ -353,6 +375,10 @@ function(params) {{
         stopEditingWhenCellsLoseFocus=True,
         suppressMovableColumns=True,
         suppressCellFocus=False,
+        alwaysShowHorizontalScroll=True,
+        alwaysShowVerticalScroll=True,
+        suppressHorizontalScroll=False,
+        scrollbarWidth=14,
     )
     result = AgGrid(
         data,
@@ -767,11 +793,12 @@ def start_manual_action(proposed, label):
 
 with st.container(horizontal=True, horizontal_alignment="center"):
     with st.container(key="abc_page", width=1120, gap="medium"):
-        with st.container(key="abc_header", horizontal=True, vertical_alignment="center", gap="large"):
-            with st.container(key="abc_brand", width=240):
+        with st.container(key="abc_header"):
+            brand_col, title_col = st.columns([1, 4], gap="large", vertical_alignment="center")
+            with brand_col.container(key="abc_brand"):
                 st.image(str(Path(__file__).with_name("abc1024x279.webp")), width="stretch",
                          alt="ABC Aprendiz — Centro Social de Educação para o Trabalho")
-            with st.container(width=700, gap="small"):
+            with title_col.container(gap="small"):
                 st.title("Ensalamento de alunos")
                 st.write("Organize os alunos nas turmas da manhã e da tarde e obtenha a planilha de resultado.")
 
@@ -797,13 +824,14 @@ with st.container(horizontal=True, horizontal_alignment="center"):
 
         with work_tab:
             with st.container(key="abc_upload", border=True, gap="small"):
-                st.header("1. Selecionar planilha")
+                step_heading(1, "Vamos começar pela planilha")
                 st.write("Envie o arquivo com a lista de alunos e a quantidade de salas e vagas disponíveis.")
-                with st.container(horizontal=True, gap="large", vertical_alignment="center"):
-                    with st.container(width=660):
+                with st.container():
+                    upload_col, format_col = st.columns([1.7, 1], gap="large", vertical_alignment="center")
+                    with upload_col:
                         uploaded = st.file_uploader("Planilha Excel com as abas Alunos e Turmas", type="xlsx",
                                                     help="O arquivo original é preservado. O resultado será baixado como uma cópia.")
-                    with st.container(key="abc_format", width=300, gap="small"):
+                    with format_col.container(key="abc_format", gap="small"):
                         st.subheader("O que a planilha precisa ter")
                         st.markdown("**Alunos** · nome, sexo e disponibilidade.  \n"
                                     "**Turmas** · quantidade de salas e vagas por turno.")
@@ -813,11 +841,14 @@ with st.container(horizontal=True, horizontal_alignment="center"):
 
             if uploaded is None:
                 with st.container(key="abc_next", horizontal=True, gap="large"):
-                    with st.container(width=450):
-                        st.markdown("**2. Organizar as turmas**")
+                    with st.container(width=330):
+                        st.markdown("**2. Confira os dados**")
                         st.caption("Depois do envio, confira as salas disponíveis e gere o ensalamento.")
-                    with st.container(width=450):
-                        st.markdown("**3. Consultar e baixar**")
+                    with st.container(width=330):
+                        st.markdown("**3. Escolha como usar as salas**")
+                        st.caption("Compare as opções e consulte os alunos de cada turma.")
+                    with st.container(width=330):
+                        st.markdown("**4. Confira e baixe o resultado**")
                         st.caption("Veja a distribuição dos alunos e baixe o Excel com o resultado.")
                 st.stop()
 
@@ -863,9 +894,8 @@ with st.container(horizontal=True, horizontal_alignment="center"):
             committed_book = workbook_with_rows(content, effective_rows, effective_resources)
             students, resources, _, _ = inspect_entry(
                 committed_book, effective_rows, resource_records=effective_resources)
-            st.divider()
             with st.container(key="abc_settings", border=True, gap="medium"):
-                st.header("2. Conferir dados e gerar o ensalamento")
+                step_heading(2, "Confira os dados e gere as turmas")
                 st.write("Confira os dados e gere a primeira distribuição. Depois, você poderá comparar as opções de uso das turmas e recalcular.")
                 allow_empty = st.session_state.room_mode_choice == "Somente as salas necessárias"
                 choices = room_choices_for_mode(students, resources, allow_empty)
@@ -936,7 +966,7 @@ with st.container(horizontal=True, horizontal_alignment="center"):
                 st.subheader("Alunos")
                 st.caption("Atenção: vermelho indica erro, amarelo indica aviso e verde indica correção automática.")
                 st.caption("Os avisos identificam os alunos pelo número da coluna Registro.")
-                st.caption("Para ampliar a tabela e ler a coluna Atenção, use o botão de tela cheia na barra da tabela.")
+                st.caption("Use a barra horizontal no rodapé para ver todas as colunas e a barra vertical à direita para percorrer os alunos. Você também pode ampliar a tabela pelo botão de tela cheia.")
                 draft_base_rows = st.session_state.get(
                     "roster_draft_rows", [list(row) for row in committed_rows])
                 draft_validated_rows, draft_corrections = normalize_roster(draft_base_rows)
@@ -1032,7 +1062,8 @@ with st.container(horizontal=True, horizontal_alignment="center"):
                                              type="primary", width="stretch")
                 if generate or requested_generation:
                     try:
-                        with st.status("Preparando o resultado…", expanded=True) as progress:
+                        progress_slot = st.empty()
+                        with progress_slot.status("Preparando o resultado…", expanded=True) as progress:
                             st.write("Preparando a cópia da planilha com os dados confirmados.")
                             result_book = workbook_with_rows(content, effective_rows, effective_resources)
                             st.write("Validando os dados e gerando o relatório." if blocking else
@@ -1053,6 +1084,7 @@ with st.container(horizontal=True, horizontal_alignment="center"):
                             result_book.close()
                             progress.update(label="Relatório de inconsistências gerado." if result[1] else
                                             "Ensalamento concluído.", state="complete", expanded=False)
+                        progress_slot.empty()
                         st.session_state.result = result
                         st.session_state.result_signature = signature
                         st.session_state.result_room_mode = allow_empty
@@ -1068,14 +1100,13 @@ with st.container(horizontal=True, horizontal_alignment="center"):
                     with st.expander("Relatório geral de erros e avisos", expanded=True):
                         for level, message in section_result_records:
                             (st.error if level == "Erro" else st.warning if level == "Aviso" else st.success)(message)
-                if section_result_visible and section_warning_count:
+                if section_result_visible and section_warning_count and not section_is_blocked:
                     st.warning(
                         f"Ensalamento concluído com {section_warning_count} aviso(s) que precisam de atenção. "
                         "A distribuição foi gerada; confira os registros antes de utilizá-la."
                     )
             committed_book.close()
 
-            st.divider()
             if "result" not in st.session_state:
                 st.caption("O resultado aparecerá abaixo após o processamento dos dados salvos.")
                 st.stop()
@@ -1084,20 +1115,21 @@ with st.container(horizontal=True, horizontal_alignment="center"):
                 st.stop()
             result_bytes, blocked, result_issues, stats = st.session_state.result
             result_records = st.session_state.get("result_issue_records", issue_records(result_issues))
-            with st.container(key="abc_results", border=True, gap="medium"):
-                st.header("3. Consultar e baixar o resultado")
+            with st.container(key="abc_result_flow", gap="medium"):
                 name = Path(uploaded.name).stem
                 if blocked:
-                    st.error("O ensalamento não foi gerado porque há erros bloqueantes. Corrija os dados na tabela e salve as alterações.")
-                    st.download_button("Baixar planilha com inconsistências", result_bytes,
-                                       file_name=f"{name}_inconsistencias.xlsx",
-                                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    with st.container(key="abc_results", border=True, gap="medium"):
+                        step_heading(3, "Confira o que precisa ser corrigido")
+                        st.error("O ensalamento não foi gerado porque há erros bloqueantes. Corrija os dados na tabela e salve as alterações.")
+                        st.download_button("Baixar planilha com inconsistências", result_bytes,
+                                           file_name=f"{name}_inconsistencias.xlsx",
+                                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                 else:
                     result_current = st.session_state.get("result_signature") == signature
                     if not result_current:
                         previous_mode = "somente as necessárias" if st.session_state.get("result_room_mode") else "todas as turmas disponíveis"
                         current_mode = st.session_state.room_mode_choice.casefold()
-                        st.warning(f"O resultado exibido foi calculado usando {previous_mode}. A opção atual é {current_mode}; recalcule ao final da página para atualizar a distribuição.")
+                        st.warning(f"O resultado exibido foi calculado usando {previous_mode}. A opção atual é {current_mode}; clique em Recalcular ensalamento abaixo para atualizar a distribuição.")
                     warning_count = sum(level == "Aviso" for level, _ in result_records)
                     corrections = [record for record in result_records if record[0] == "Correção automática"]
                     if not warning_count:
@@ -1107,10 +1139,6 @@ with st.container(horizontal=True, horizontal_alignment="center"):
                     total = sum(row[1] for row in stats)
                     capacity_by_room = {row[0]: resources.get("vagas_manha" if row[0].startswith("MANHÃ") else "vagas_tarde", 0)
                                         for row in stats}
-                    export_room_table = pd.DataFrame(stats, columns=["Turma", "Alunos", "Meninas", "Meninos"])
-                    export_denominator = export_room_table["Alunos"].replace(0, pd.NA)
-                    export_room_table["% meninas"] = (100 * export_room_table["Meninas"] / export_denominator).fillna(0).round(1)
-                    export_room_table["% meninos"] = (100 * export_room_table["Meninos"] / export_denominator).fillna(0).round(1)
                     room_table = pd.DataFrame(stats, columns=["Turma", "Alunos", "Meninas", "Meninos"])
                     room_table["Vagas"] = room_table["Turma"].map(capacity_by_room).fillna(0).astype(int)
                     room_table["Vagas restantes"] = (room_table["Vagas"] - room_table["Alunos"]).clip(lower=0)
@@ -1118,286 +1146,285 @@ with st.container(horizontal=True, horizontal_alignment="center"):
                     room_table["% meninas"] = (100 * room_table["Meninas"] / room_denominator).fillna(0).round(1)
                     room_table["% meninos"] = (100 * room_table["Meninos"] / room_denominator).fillna(0).round(1)
                     room_table = room_table[["Turma", "Alunos", "Vagas", "Vagas restantes", "Meninas", "Meninos", "% meninas", "% meninos"]]
+                    original_pdf = report_pdf("Relatório resumo da distribuição", stats, capacity_by_room,
+                                              result_records, total, adjusted=False,
+                                              roster=output_table(result_bytes, "Ensalamento").itertuples(index=False, name=None))
 
-                    with st.container(key="abc_totals"):
-                        metrics = st.columns(2)
-                        metrics[0].metric("Alunos alocados", total)
-                        metrics[1].metric("Turmas ocupadas", len(stats))
-                        st.caption(f"Distribuição geral: {sum(row[2] for row in stats)} meninas e {sum(row[3] for row in stats)} meninos.")
-
-                    st.subheader("Resumo por turma")
-                    st.dataframe(room_table, hide_index=True, width="stretch")
-                    with st.expander("Ver gráfico por turma", expanded=False):
-                        st.bar_chart(room_table, x="Turma", y=["Meninas", "Meninos"], stack=True,
-                                     color=["#2F9587", "#2B469A"], height=300, sort=False,
-                                     alt="Quantidade de meninas e meninos em cada turma")
-
-                    with st.container(key="abc_downloads"):
-                        if not result_current:
-                            st.info("Clique em Recalcular ensalamento após escolher as salas para liberar os downloads da opção atual.")
-                        st.download_button("Baixar Excel completo (.xlsx)", result_bytes,
-                                           file_name=f"{name}_resultado.xlsx",
-                                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                           type="primary", width="stretch", disabled=not result_current,
-                                           on_click="ignore")
-                        st.caption("O Excel inclui as abas de entrada, o ensalamento e as inconsistências.")
-                        with st.expander("Outros formatos de download", expanded=False):
-                            c1, c2 = st.columns(2)
-                            c1.download_button("Baixar resumo por turma (.csv)",
-                                               export_room_table.to_csv(index=False).encode("utf-8-sig"),
-                                               file_name=f"{name}_resumo.csv", mime="text/csv", width="stretch",
-                                               disabled=not result_current, on_click="ignore")
-                            original_pdf = report_pdf("Relatório resumo da distribuição", stats, capacity_by_room,
-                                                      result_records, total, adjusted=False,
-                                                      roster=output_table(result_bytes, "Ensalamento").itertuples(index=False, name=None))
-                            c2.download_button("Baixar resumo da distribuição (PDF)", original_pdf,
-                                               file_name=f"{name}_relatorio_otimizado.pdf", mime="application/pdf",
-                                               width="stretch", disabled=not result_current, on_click="ignore")
-
-                    st.divider()
-                    st.subheader("Quer usar menos salas?")
-                    st.write("A distribuição inicial usa todas as salas disponíveis. Se preferir, escolha outra opção abaixo e recalcule.")
-                    all_rooms = "Todas as salas disponíveis"
-                    minimum_rooms = "Somente as salas necessárias"
-                    all_col, minimum_col = st.columns(2, gap="large")
-                    with all_col.container(
-                            key="abc_mode_all_selected" if st.session_state.room_mode_choice == all_rooms else "abc_mode_all",
-                            border=True, gap="small", height="stretch"):
-                        st.subheader("Todas as salas disponíveis")
-                        st.caption("Mantém todas as salas disponíveis na distribuição.")
-                        st.space("stretch")
-                        if st.button("Selecionado" if st.session_state.room_mode_choice == all_rooms else "Usar todas as salas",
-                                     key="choose_all_rooms", type="primary" if st.session_state.room_mode_choice == all_rooms else "secondary",
-                                     width="stretch", disabled=st.session_state.room_mode_choice == all_rooms):
-                            st.session_state.room_mode_choice = all_rooms
-                            st.rerun()
-                    with minimum_col.container(
-                            key="abc_mode_minimum_selected" if st.session_state.room_mode_choice == minimum_rooms else "abc_mode_minimum",
-                            border=True, gap="small", height="stretch"):
-                        st.subheader("Somente as salas necessárias")
-                        st.caption("Usa o menor número de salas que comporta os alunos; a diferença entre turmas fica em até um aluno por turno.")
-                        st.space("stretch")
-                        if st.button("Selecionado" if st.session_state.room_mode_choice == minimum_rooms else "Usar somente as salas necessárias",
-                                     key="choose_minimum_rooms", type="primary" if st.session_state.room_mode_choice == minimum_rooms else "secondary",
-                                     width="stretch", disabled=st.session_state.room_mode_choice == minimum_rooms):
-                            st.session_state.room_mode_choice = minimum_rooms
-                            st.rerun()
-
-                    st.subheader("Prévia da configuração por turno")
-                    room_cards = st.columns(2, gap="large")
-                    for col, (period, suffix, card_key) in zip(
-                            room_cards,
-                            (("Manhã", "manha", "abc_room_morning"),
-                             ("Tarde", "tarde", "abc_room_afternoon"))):
-                        available = resources.get(f"turmas_{suffix}") or 0
-                        capacity = resources.get(f"vagas_{suffix}") or 0
-                        count = sum(row[2] == period for row in students)
-                        selected_count = choices.get(suffix, 0)
-                        with col.container(key=card_key, border=True, gap="small"):
-                            if available and capacity:
-                                seats = selected_count * capacity
-                                st.metric(f"{period} · salas usadas", f"{selected_count} de {available}")
-                                st.caption(f"{count} alunos · {capacity} vagas por turma · {max(seats - count, 0)} vagas livres no total")
-                            else:
-                                st.subheader(period)
-                                st.warning("Confira a quantidade de turmas e as vagas por turma na planilha.")
-
-                    if st.session_state.get("result_signature") != signature:
-                        if st.button("Recalcular ensalamento", type="primary", key="recalculate_room_mode"):
-                            st.session_state.requested_room_regeneration = True
-                            st.rerun()
-
-
-                    list_tab, adjustments_tab = st.tabs(
-                        ["Lista de alunos", "Ajustes avançados"])
-                    with list_tab:
-                        result_table = output_table(result_bytes, "Ensalamento")
-                        search_col, period_col = st.columns([2, 1])
-                        search = search_col.text_input("Buscar aluno", placeholder="Digite o nome do aluno")
-                        selected_period = period_col.selectbox("Turno", ["Todos", "Manhã", "Tarde"])
-                        if selected_period != "Todos":
-                            result_table = result_table[result_table["Disponibilidade"].astype(str).str.casefold() == selected_period.casefold()]
-                        if search:
-                            result_table = result_table[result_table["Nome"].astype(str).str.contains(
-                                search, case=False, regex=False)]
-                        if result_table.empty:
-                            st.info("Nenhum aluno encontrado. Tente outro nome ou turno.")
-                        else:
-                            st.dataframe(result_table, hide_index=True, width="stretch", height=500)
-                    with adjustments_tab:
-                        st.subheader("Ajustes manuais da distribuição")
-                        st.error("Use esta área somente se precisar alterar a solução otimizada. As mudanças podem afetar o equilíbrio entre turmas.", icon=":material/warning:")
-                        base_table = output_table(result_bytes, "Ensalamento")
-                        original_assignments = {i: row[3] for i, row in enumerate(base_table.itertuples(index=False, name=None))}
-                        adjustment_students = [tuple(row[:3]) for row in base_table.itertuples(index=False, name=None)]
-                        actual_rooms = list(dict.fromkeys(room for room in original_assignments.values() if room))
-                        capacities = {room: resources.get("vagas_manha" if room.startswith("MANHÃ") else "vagas_tarde", 0)
-                                      for room in actual_rooms}
-                        if st.session_state.get("manual_signature") != st.session_state.result_signature:
-                            st.session_state.manual_original = dict(original_assignments)
-                            st.session_state.manual_assignments = dict(original_assignments)
-                            st.session_state.manual_history = []
-                            st.session_state.manual_signature = st.session_state.result_signature
-                        adjusted = st.session_state.manual_assignments
-                        if st.session_state.get("manual_notice"):
-                            st.success(st.session_state.pop("manual_notice"))
-                        if changed(adjusted, original_assignments):
-                            st.warning("Esta é uma distribuição ajustada manualmente; ela não é a solução otimizada original.")
-                        manual_problems = validate_adjusted(adjusted, adjustment_students, capacities)
-                        if manual_problems:
-                            st.error("A distribuição ajustada não está conforme: " + " ".join(manual_problems))
-                        manual_stats = room_stats(adjusted, adjustment_students, actual_rooms)
-                        manual_table = pd.DataFrame(manual_stats, columns=["Turma", "Alunos", "Meninas", "Meninos"])
-                        manual_table["Capacidade"] = manual_table["Turma"].map(capacities)
-                        manual_table["% meninas"] = (100 * manual_table["Meninas"] / manual_table["Alunos"].replace(0, pd.NA)).fillna(0).round(1)
-                        morning_col, afternoon_col = st.columns(2)
-                        with morning_col:
-                            st.subheader("Manhã")
-                            st.table(manual_table[manual_table["Turma"].str.startswith("MANHÃ")])
-                        with afternoon_col:
-                            st.subheader("Tarde")
-                            st.table(manual_table[manual_table["Turma"].str.startswith("TARDE")])
-                        selected_room = st.selectbox("Consultar turma", actual_rooms, key="manual_view_room")
-                        selected_members = [i for i, room in adjusted.items() if room == selected_room]
-                        st.caption(f"{len(selected_members)} aluno(s) · capacidade máxima {capacities[selected_room]} · "
-                                   f"{sum(adjustment_students[i][1] == 'M' for i in selected_members)} meninos · "
-                                   f"{sum(adjustment_students[i][1] == 'F' for i in selected_members)} meninas")
-                        st.table(pd.DataFrame(
-                            [{"Registro": i + 1, "Aluno": adjustment_students[i][0], "Sexo": adjustment_students[i][1],
-                              "Disponibilidade": adjustment_students[i][2]} for i in selected_members],
-                            columns=["Registro", "Aluno", "Sexo", "Disponibilidade"]))
-                        st.caption(f"Alunos sem turma: {sum(room is None for room in adjusted.values())}.")
-
-                        def person_options(room):
-                            return [i for i, assigned in adjusted.items() if assigned == room]
-
-                        def person_label(i):
-                            name_i, sex_i, period_i = adjustment_students[i]
-                            return f"{name_i} · registro {i + 1} · {sex_i} · {period_i}"
-
-                        with st.expander("Trocar alunos entre turmas", expanded=False):
-                            room_a = st.selectbox("Turma de origem", actual_rooms, key="swap_room_a")
-                            people_a = person_options(room_a)
-                            student_a = st.selectbox("Primeiro aluno", people_a, format_func=person_label,
-                                                     key="swap_student_a", disabled=not people_a)
-                            room_b = st.selectbox("Outra turma", actual_rooms, key="swap_room_b")
-                            people_b = person_options(room_b)
-                            student_b = st.selectbox("Segundo aluno", people_b, format_func=person_label,
-                                                     key="swap_student_b", disabled=not people_b)
-                            cross_turn = room_a.split(" - ")[0] != room_b.split(" - ")[0]
-                            if cross_turn:
-                                st.error("A troca não é permitida entre turnos diferentes.")
-                            elif room_a == room_b:
-                                st.error("Selecione duas turmas diferentes para trocar alunos.")
-                            elif people_a and people_b:
-                                st.caption(f"Prévia: {person_label(student_a)} ↔ {person_label(student_b)}")
-                                swap_preview = dict(adjusted)
-                                swap_preview[student_a], swap_preview[student_b] = room_b, room_a
-                                before = {row[0]: row[1:] for row in room_stats(adjusted, adjustment_students, [room_a, room_b])}
-                                after = {row[0]: row[1:] for row in room_stats(swap_preview, adjustment_students, [room_a, room_b])}
-                                st.table(pd.DataFrame([
-                                    {"Turma": room, "Alunos antes": before[room][0], "Meninas antes": before[room][1],
-                                     "Meninos antes": before[room][2], "Alunos depois": after[room][0],
-                                     "Meninas depois": after[room][1], "Meninos depois": after[room][2]}
-                                    for room in (room_a, room_b)]))
-                            different_sex = bool(people_a and people_b and adjustment_students[student_a][1] != adjustment_students[student_b][1])
-                            confirm_gender = st.checkbox("Esta troca poderá alterar o equilíbrio de gênero. Desejo continuar.",
-                                                          key="confirm_swap_gender") if different_sex else True
-                            if st.button("Confirmar troca", key="apply_swap", disabled=(cross_turn or room_a == room_b or
-                                                                                         not people_a or not people_b or not confirm_gender)):
-                                proposed = dict(adjusted)
-                                proposed[student_a], proposed[student_b] = room_b, room_a
-                                start_manual_action(proposed, "Troca de alunos aplicada. Confira os novos totais.")
+                    with st.container(key="abc_distribution", border=True, gap="medium"):
+                        step_heading(3, "Quer usar menos salas?")
+                        st.write("A distribuição inicial usa todas as salas disponíveis. Se preferir, escolha outra opção abaixo e recalcule.")
+                        all_rooms = "Todas as salas disponíveis"
+                        minimum_rooms = "Somente as salas necessárias"
+                        all_col, minimum_col = st.columns(2, gap="large")
+                        with all_col.container(
+                                key="abc_mode_all_selected" if st.session_state.room_mode_choice == all_rooms else "abc_mode_all",
+                                border=True, gap="small", height="stretch"):
+                            st.subheader("Todas as salas disponíveis")
+                            st.caption("Mantém todas as salas disponíveis na distribuição.")
+                            st.space("stretch")
+                            if st.button("Selecionado" if st.session_state.room_mode_choice == all_rooms else "Usar todas as salas",
+                                         key="choose_all_rooms", type="primary" if st.session_state.room_mode_choice == all_rooms else "secondary",
+                                         width="stretch", disabled=st.session_state.room_mode_choice == all_rooms):
+                                st.session_state.room_mode_choice = all_rooms
+                                st.rerun()
+                        with minimum_col.container(
+                                key="abc_mode_minimum_selected" if st.session_state.room_mode_choice == minimum_rooms else "abc_mode_minimum",
+                                border=True, gap="small", height="stretch"):
+                            st.subheader("Somente as salas necessárias")
+                            st.caption("Usa o menor número de salas que comporta os alunos; a diferença entre turmas fica em até um aluno por turno.")
+                            st.space("stretch")
+                            if st.button("Selecionado" if st.session_state.room_mode_choice == minimum_rooms else "Usar somente as salas necessárias",
+                                         key="choose_minimum_rooms", type="primary" if st.session_state.room_mode_choice == minimum_rooms else "secondary",
+                                         width="stretch", disabled=st.session_state.room_mode_choice == minimum_rooms):
+                                st.session_state.room_mode_choice = minimum_rooms
                                 st.rerun()
 
-                        with st.expander("Mover aluno", expanded=False):
-                            movable = [i for i, room in adjusted.items() if room is not None]
-                            move_student = st.selectbox("Aluno", movable, format_func=person_label,
-                                                        key="move_student", disabled=not movable)
-                            move_room = st.selectbox("Turma de destino", actual_rooms, key="move_room")
-                            move_valid = bool(movable) and move_room != adjusted.get(move_student)
-                            if movable and move_valid:
-                                source_room = adjusted[move_student]
-                                same_turn = source_room.split(" - ")[0] == move_room.split(" - ")[0]
-                                target_count = sum(room == move_room for room in adjusted.values())
-                                has_space = target_count < capacities[move_room]
-                                if not same_turn:
-                                    st.error("A movimentação só pode ocorrer entre turmas do mesmo turno.")
-                                if not has_space:
-                                    st.error("A turma de destino está lotada.")
-                                if same_turn and has_space:
-                                    st.caption(f"Prévia: {person_label(move_student)} · {source_room} → {move_room}")
-                                    st.warning("A mudança pode afetar o equilíbrio de quantidade ou gênero.")
-                                    proposed_move = dict(adjusted)
-                                    proposed_move[move_student] = move_room
-                                    before = {row[0]: row[1:] for row in room_stats(adjusted, adjustment_students,
-                                                                                  [source_room, move_room])}
-                                    after = {row[0]: row[1:] for row in room_stats(proposed_move, adjustment_students,
-                                                                                 [source_room, move_room])}
+                        st.subheader("Prévia da configuração por turno")
+                        room_cards = st.columns(2, gap="large")
+                        for col, (period, suffix, card_key) in zip(
+                                room_cards,
+                                (("Manhã", "manha", "abc_room_morning"),
+                                 ("Tarde", "tarde", "abc_room_afternoon"))):
+                            available = resources.get(f"turmas_{suffix}") or 0
+                            capacity = resources.get(f"vagas_{suffix}") or 0
+                            count = sum(row[2] == period for row in students)
+                            selected_count = choices.get(suffix, 0)
+                            with col.container(key=card_key, border=True, gap="small"):
+                                if available and capacity:
+                                    seats = selected_count * capacity
+                                    st.metric(f"{period} · salas usadas", f"{selected_count} de {available}")
+                                    st.caption(f"{count} alunos · {capacity} vagas por turma · {max(seats - count, 0)} vagas livres no total")
+                                else:
+                                    st.subheader(period)
+                                    st.warning("Confira a quantidade de turmas e as vagas por turma na planilha.")
+
+                        if st.session_state.get("result_signature") != signature:
+                            if st.button("Recalcular ensalamento", type="primary", key="recalculate_room_mode"):
+                                st.session_state.requested_room_regeneration = True
+                                st.rerun()
+
+
+                        list_tab, adjustments_tab = st.tabs(
+                            ["Lista de alunos", "Ajustes avançados"])
+                        with list_tab:
+                            result_table = output_table(result_bytes, "Ensalamento")
+                            search_col, period_col = st.columns([2, 1])
+                            search = search_col.text_input("Buscar aluno", placeholder="Digite o nome do aluno")
+                            selected_period = period_col.selectbox("Turno", ["Todos", "Manhã", "Tarde"])
+                            if selected_period != "Todos":
+                                result_table = result_table[result_table["Disponibilidade"].astype(str).str.casefold() == selected_period.casefold()]
+                            if search:
+                                result_table = result_table[result_table["Nome"].astype(str).str.contains(
+                                    search, case=False, regex=False)]
+                            if result_table.empty:
+                                st.info("Nenhum aluno encontrado. Tente outro nome ou turno.")
+                            else:
+                                st.dataframe(result_table, hide_index=True, width="stretch", height=280)
+                        with adjustments_tab:
+                            st.subheader("Ajustes manuais da distribuição")
+                            st.error("Use esta área somente se precisar alterar a solução otimizada. As mudanças podem afetar o equilíbrio entre turmas.", icon=":material/warning:")
+                            base_table = output_table(result_bytes, "Ensalamento")
+                            original_assignments = {i: row[3] for i, row in enumerate(base_table.itertuples(index=False, name=None))}
+                            adjustment_students = [tuple(row[:3]) for row in base_table.itertuples(index=False, name=None)]
+                            actual_rooms = list(dict.fromkeys(room for room in original_assignments.values() if room))
+                            capacities = {room: resources.get("vagas_manha" if room.startswith("MANHÃ") else "vagas_tarde", 0)
+                                          for room in actual_rooms}
+                            if st.session_state.get("manual_signature") != st.session_state.result_signature:
+                                st.session_state.manual_original = dict(original_assignments)
+                                st.session_state.manual_assignments = dict(original_assignments)
+                                st.session_state.manual_history = []
+                                st.session_state.manual_signature = st.session_state.result_signature
+                            adjusted = st.session_state.manual_assignments
+                            if st.session_state.get("manual_notice"):
+                                st.success(st.session_state.pop("manual_notice"))
+                            if changed(adjusted, original_assignments):
+                                st.warning("Esta é uma distribuição ajustada manualmente; ela não é a solução otimizada original.")
+                            manual_problems = validate_adjusted(adjusted, adjustment_students, capacities)
+                            if manual_problems:
+                                st.error("A distribuição ajustada não está conforme: " + " ".join(manual_problems))
+                            manual_stats = room_stats(adjusted, adjustment_students, actual_rooms)
+                            manual_table = pd.DataFrame(manual_stats, columns=["Turma", "Alunos", "Meninas", "Meninos"])
+                            manual_table["Capacidade"] = manual_table["Turma"].map(capacities)
+                            manual_table["% meninas"] = (100 * manual_table["Meninas"] / manual_table["Alunos"].replace(0, pd.NA)).fillna(0).round(1)
+                            morning_col, afternoon_col = st.columns(2)
+                            with morning_col:
+                                st.subheader("Manhã")
+                                st.table(manual_table[manual_table["Turma"].str.startswith("MANHÃ")])
+                            with afternoon_col:
+                                st.subheader("Tarde")
+                                st.table(manual_table[manual_table["Turma"].str.startswith("TARDE")])
+                            selected_room = st.selectbox("Consultar turma", actual_rooms, key="manual_view_room")
+                            selected_members = [i for i, room in adjusted.items() if room == selected_room]
+                            st.caption(f"{len(selected_members)} aluno(s) · capacidade máxima {capacities[selected_room]} · "
+                                       f"{sum(adjustment_students[i][1] == 'M' for i in selected_members)} meninos · "
+                                       f"{sum(adjustment_students[i][1] == 'F' for i in selected_members)} meninas")
+                            st.table(pd.DataFrame(
+                                [{"Registro": i + 1, "Aluno": adjustment_students[i][0], "Sexo": adjustment_students[i][1],
+                                  "Disponibilidade": adjustment_students[i][2]} for i in selected_members],
+                                columns=["Registro", "Aluno", "Sexo", "Disponibilidade"]))
+                            st.caption(f"Alunos sem turma: {sum(room is None for room in adjusted.values())}.")
+
+                            def person_options(room):
+                                return [i for i, assigned in adjusted.items() if assigned == room]
+
+                            def person_label(i):
+                                name_i, sex_i, period_i = adjustment_students[i]
+                                return f"{name_i} · registro {i + 1} · {sex_i} · {period_i}"
+
+                            with st.expander("Trocar alunos entre turmas", expanded=False):
+                                room_a = st.selectbox("Turma de origem", actual_rooms, key="swap_room_a")
+                                people_a = person_options(room_a)
+                                student_a = st.selectbox("Primeiro aluno", people_a, format_func=person_label,
+                                                         key="swap_student_a", disabled=not people_a)
+                                room_b = st.selectbox("Outra turma", actual_rooms, key="swap_room_b")
+                                people_b = person_options(room_b)
+                                student_b = st.selectbox("Segundo aluno", people_b, format_func=person_label,
+                                                         key="swap_student_b", disabled=not people_b)
+                                cross_turn = room_a.split(" - ")[0] != room_b.split(" - ")[0]
+                                if cross_turn:
+                                    st.error("A troca não é permitida entre turnos diferentes.")
+                                elif room_a == room_b:
+                                    st.error("Selecione duas turmas diferentes para trocar alunos.")
+                                elif people_a and people_b:
+                                    st.caption(f"Prévia: {person_label(student_a)} ↔ {person_label(student_b)}")
+                                    swap_preview = dict(adjusted)
+                                    swap_preview[student_a], swap_preview[student_b] = room_b, room_a
+                                    before = {row[0]: row[1:] for row in room_stats(adjusted, adjustment_students, [room_a, room_b])}
+                                    after = {row[0]: row[1:] for row in room_stats(swap_preview, adjustment_students, [room_a, room_b])}
                                     st.table(pd.DataFrame([
                                         {"Turma": room, "Alunos antes": before[room][0], "Meninas antes": before[room][1],
                                          "Meninos antes": before[room][2], "Alunos depois": after[room][0],
                                          "Meninas depois": after[room][1], "Meninos depois": after[room][2]}
-                                        for room in (source_room, move_room)]))
-                                    confirm_move = st.checkbox("Confirmo esta movimentação manual.", key="confirm_move")
+                                        for room in (room_a, room_b)]))
+                                different_sex = bool(people_a and people_b and adjustment_students[student_a][1] != adjustment_students[student_b][1])
+                                confirm_gender = st.checkbox("Esta troca poderá alterar o equilíbrio de gênero. Desejo continuar.",
+                                                              key="confirm_swap_gender") if different_sex else True
+                                if st.button("Confirmar troca", key="apply_swap", disabled=(cross_turn or room_a == room_b or
+                                                                                             not people_a or not people_b or not confirm_gender)):
+                                    proposed = dict(adjusted)
+                                    proposed[student_a], proposed[student_b] = room_b, room_a
+                                    start_manual_action(proposed, "Troca de alunos aplicada. Confira os novos totais.")
+                                    st.rerun()
+
+                            with st.expander("Mover aluno", expanded=False):
+                                movable = [i for i, room in adjusted.items() if room is not None]
+                                move_student = st.selectbox("Aluno", movable, format_func=person_label,
+                                                            key="move_student", disabled=not movable)
+                                move_room = st.selectbox("Turma de destino", actual_rooms, key="move_room")
+                                move_valid = bool(movable) and move_room != adjusted.get(move_student)
+                                if movable and move_valid:
+                                    source_room = adjusted[move_student]
+                                    same_turn = source_room.split(" - ")[0] == move_room.split(" - ")[0]
+                                    target_count = sum(room == move_room for room in adjusted.values())
+                                    has_space = target_count < capacities[move_room]
+                                    if not same_turn:
+                                        st.error("A movimentação só pode ocorrer entre turmas do mesmo turno.")
+                                    if not has_space:
+                                        st.error("A turma de destino está lotada.")
+                                    if same_turn and has_space:
+                                        st.caption(f"Prévia: {person_label(move_student)} · {source_room} → {move_room}")
+                                        st.warning("A mudança pode afetar o equilíbrio de quantidade ou gênero.")
+                                        proposed_move = dict(adjusted)
+                                        proposed_move[move_student] = move_room
+                                        before = {row[0]: row[1:] for row in room_stats(adjusted, adjustment_students,
+                                                                                      [source_room, move_room])}
+                                        after = {row[0]: row[1:] for row in room_stats(proposed_move, adjustment_students,
+                                                                                     [source_room, move_room])}
+                                        st.table(pd.DataFrame([
+                                            {"Turma": room, "Alunos antes": before[room][0], "Meninas antes": before[room][1],
+                                             "Meninos antes": before[room][2], "Alunos depois": after[room][0],
+                                             "Meninas depois": after[room][1], "Meninos depois": after[room][2]}
+                                            for room in (source_room, move_room)]))
+                                        confirm_move = st.checkbox("Confirmo esta movimentação manual.", key="confirm_move")
+                                    else:
+                                        confirm_move = False
                                 else:
-                                    confirm_move = False
+                                    same_turn, has_space, confirm_move = False, False, False
+                                if st.button("Confirmar movimentação", key="apply_move",
+                                             disabled=not (move_valid and same_turn and has_space and confirm_move)):
+                                    proposed = dict(adjusted)
+                                    proposed[move_student] = move_room
+                                    start_manual_action(proposed, "Movimentação aplicada. Confira os novos totais.")
+                                    st.rerun()
+
+                            with st.expander("Remover aluno do ensalamento", expanded=False):
+                                remove_room = st.selectbox("Turma", actual_rooms, key="remove_room")
+                                removable = person_options(remove_room)
+                                remove_student = st.selectbox("Aluno", removable, format_func=person_label,
+                                                              key="remove_student", disabled=not removable)
+                                st.warning("Você está prestes a remover este aluno da distribuição. Ele ficará sem turma no resultado ajustado. Deseja continuar?")
+                                confirm_remove = st.checkbox("Confirmo que este aluno ficará sem turma.", key="confirm_remove")
+                                if st.button("Remover aluno", key="apply_remove", disabled=not removable or not confirm_remove):
+                                    proposed = dict(adjusted)
+                                    proposed[remove_student] = None
+                                    start_manual_action(proposed, "Aluno removido apenas da distribuição ajustada.")
+                                    st.rerun()
+
+                            undo_col, restore_col = st.columns(2)
+                            if undo_col.button("Desfazer última alteração", disabled=not st.session_state.manual_history,
+                                               key="undo_manual"):
+                                st.session_state.manual_assignments = st.session_state.manual_history.pop()
+                                st.session_state.manual_notice = "Última alteração desfeita."
+                                st.rerun()
+                            restore_confirm = restore_col.checkbox("Confirmo restaurar a solução original.", key="confirm_restore")
+                            if restore_col.button("Restaurar ensalamento original", disabled=not changed(adjusted, original_assignments) or not restore_confirm,
+                                                  key="restore_manual"):
+                                st.session_state.manual_assignments = dict(st.session_state.manual_original)
+                                st.session_state.manual_history = []
+                                st.session_state.manual_notice = "Solução otimizada original restaurada."
+                                st.rerun()
+
+                            adjusted_bytes = save_adjusted_result(result_bytes, adjusted, result_issues, manual_problems)
+                            if manual_problems:
+                                st.warning("A exportação será identificada como não conforme e incluirá os problemas na aba Inconsistências.")
+                                adjusted_filename = f"{name}_ensalamento_ajustado_NAO_CONFORME.xlsx"
                             else:
-                                same_turn, has_space, confirm_move = False, False, False
-                            if st.button("Confirmar movimentação", key="apply_move",
-                                         disabled=not (move_valid and same_turn and has_space and confirm_move)):
-                                proposed = dict(adjusted)
-                                proposed[move_student] = move_room
-                                start_manual_action(proposed, "Movimentação aplicada. Confira os novos totais.")
-                                st.rerun()
+                                adjusted_filename = f"{name}_ensalamento_ajustado.xlsx"
+                            st.download_button("Baixar ensalamento ajustado", adjusted_bytes,
+                                               file_name=adjusted_filename,
+                                               mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                               disabled=not result_current or any("excede a capacidade" in problem or "outro turno" in problem
+                                                            for problem in manual_problems), on_click="ignore")
+                            if changed(adjusted, original_assignments):
+                                adjusted_records = [*result_records,
+                                                    *(('Aviso', f"Distribuição ajustada: {problem}")
+                                                      for problem in manual_problems)]
+                                adjusted_pdf = report_pdf("Relatório resumo da distribuição", manual_stats,
+                                                          capacities, adjusted_records,
+                                                          sum(row[1] for row in manual_stats), adjusted=True,
+                                                          roster=[(*student, adjusted.get(index))
+                                                                  for index, student in enumerate(adjustment_students)])
+                                st.download_button("Baixar relatório da distribuição ajustada (PDF)", adjusted_pdf,
+                                                   file_name=f"{name}_relatorio_ajustado.pdf", mime="application/pdf",
+                                                   disabled=not result_current, on_click="ignore")
 
-                        with st.expander("Remover aluno do ensalamento", expanded=False):
-                            remove_room = st.selectbox("Turma", actual_rooms, key="remove_room")
-                            removable = person_options(remove_room)
-                            remove_student = st.selectbox("Aluno", removable, format_func=person_label,
-                                                          key="remove_student", disabled=not removable)
-                            st.warning("Você está prestes a remover este aluno da distribuição. Ele ficará sem turma no resultado ajustado. Deseja continuar?")
-                            confirm_remove = st.checkbox("Confirmo que este aluno ficará sem turma.", key="confirm_remove")
-                            if st.button("Remover aluno", key="apply_remove", disabled=not removable or not confirm_remove):
-                                proposed = dict(adjusted)
-                                proposed[remove_student] = None
-                                start_manual_action(proposed, "Aluno removido apenas da distribuição ajustada.")
-                                st.rerun()
+                    with st.container(key="abc_results", border=True, gap="medium"):
+                        step_heading(4, "Confira e baixe o resultado")
+                        with st.container(key="abc_totals"):
+                            metrics = st.columns(2)
+                            metrics[0].metric("Alunos alocados", total)
+                            metrics[1].metric("Turmas ocupadas", len(stats))
+                            st.caption(f"Distribuição geral: {sum(row[2] for row in stats)} meninas e {sum(row[3] for row in stats)} meninos.")
 
-                        undo_col, restore_col = st.columns(2)
-                        if undo_col.button("Desfazer última alteração", disabled=not st.session_state.manual_history,
-                                           key="undo_manual"):
-                            st.session_state.manual_assignments = st.session_state.manual_history.pop()
-                            st.session_state.manual_notice = "Última alteração desfeita."
-                            st.rerun()
-                        restore_confirm = restore_col.checkbox("Confirmo restaurar a solução original.", key="confirm_restore")
-                        if restore_col.button("Restaurar ensalamento original", disabled=not changed(adjusted, original_assignments) or not restore_confirm,
-                                              key="restore_manual"):
-                            st.session_state.manual_assignments = dict(st.session_state.manual_original)
-                            st.session_state.manual_history = []
-                            st.session_state.manual_notice = "Solução otimizada original restaurada."
-                            st.rerun()
+                        st.subheader("Resumo por turma")
+                        st.dataframe(room_table, hide_index=True, width="stretch")
+                        with st.expander("Ver gráfico por turma", expanded=False):
+                            st.bar_chart(room_table, x="Turma", y=["Meninas", "Meninos"], stack=True,
+                                         color=["#2F9587", "#2B469A"], height=300, sort=False,
+                                         alt="Quantidade de meninas e meninos em cada turma")
 
-                        adjusted_bytes = save_adjusted_result(result_bytes, adjusted, result_issues, manual_problems)
-                        if manual_problems:
-                            st.warning("A exportação será identificada como não conforme e incluirá os problemas na aba Inconsistências.")
-                            adjusted_filename = f"{name}_ensalamento_ajustado_NAO_CONFORME.xlsx"
-                        else:
-                            adjusted_filename = f"{name}_ensalamento_ajustado.xlsx"
-                        st.download_button("Baixar ensalamento ajustado", adjusted_bytes,
-                                           file_name=adjusted_filename,
-                                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                           disabled=not result_current or any("excede a capacidade" in problem or "outro turno" in problem
-                                                        for problem in manual_problems), on_click="ignore")
-                        if changed(adjusted, original_assignments):
-                            adjusted_records = [*result_records,
-                                                *(('Aviso', f"Distribuição ajustada: {problem}")
-                                                  for problem in manual_problems)]
-                            adjusted_pdf = report_pdf("Relatório resumo da distribuição", manual_stats,
-                                                      capacities, adjusted_records,
-                                                      sum(row[1] for row in manual_stats), adjusted=True,
-                                                      roster=[(*student, adjusted.get(index))
-                                                              for index, student in enumerate(adjustment_students)])
-                            st.download_button("Baixar relatório da distribuição ajustada (PDF)", adjusted_pdf,
-                                               file_name=f"{name}_relatorio_ajustado.pdf", mime="application/pdf",
-                                               disabled=not result_current, on_click="ignore")
+                        with st.container(key="abc_downloads"):
+                            if not result_current:
+                                st.info("Clique em Recalcular ensalamento após escolher as salas para liberar os downloads da opção atual.")
+                            excel_col, pdf_col = st.columns(2, gap="small")
+                            with excel_col:
+                                st.download_button("Baixar Excel completo (.xlsx)", result_bytes,
+                                               file_name=f"{name}_resultado.xlsx",
+                                               mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                               type="primary", width="content", disabled=not result_current,
+                                               on_click="ignore")
+                            with pdf_col:
+                                st.download_button("Baixar resumo da distribuição (PDF)", original_pdf,
+                                                    file_name=f"{name}_relatorio_otimizado.pdf", mime="application/pdf",
+                                                    width="content", disabled=not result_current, on_click="ignore")
+                            st.caption("O Excel inclui as abas de entrada, o ensalamento e as inconsistências.")

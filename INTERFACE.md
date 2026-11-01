@@ -1,5 +1,40 @@
 # Refatoração visual da interface
 
+## Atualização visual — 01/11/2026
+
+O fluxo visual agora tem quatro etapas: selecionar a planilha, conferir os dados e gerar,
+escolher o uso das salas e consultar/baixar o resultado. A escolha das salas, a prévia por
+turno e as abas de alunos/ajustes aparecem antes do resumo e dos downloads finais.
+Os títulos usam números coloridos; cabeçalho, upload e instruções ficam lado a lado em
+telas maiores, com seções mais compactas e cores que acompanham o tema claro/escuro.
+
+A conclusão com avisos continua amarela, o bloqueio fica vermelho e a conclusão sem
+avisos fica verde. O indicador temporário de processamento é removido ao finalizar para
+evitar uma segunda mensagem verde quando houver avisos. Um resultado bloqueado com
+avisos também não apresenta mensagem de conclusão bem-sucedida.
+
+Nenhum algoritmo, formato de exportação ou funcionalidade foi alterado. O PDF original
+continua sendo preparado antes do PDF ajustado, embora seu botão apareça ao final.
+Não foi gerado executável nesta atualização.
+
+Validação: `tests/visual_layout_check.py` verifica os temas, as larguras 1366, 1024, 768 e
+390, a ordem das seções, o recálculo, a disponibilidade dos downloads e os três estados
+de conclusão. As capturas estão em `tests/artifacts/interface_visual_*.png`.
+A suíte de interface/PDF teve 11 testes aprovados e 12 falhas, reproduzidas também com
+`streamlit_app.py` do HEAD anterior às alterações; são referências antigas de arquivos,
+seleção de salas e simulação do editor. Essas falhas preexistentes não foram alteradas
+neste trabalho visual.
+
+### Downloads e rolagem
+
+Os botões de Excel completo e resumo em PDF ficam lado a lado, com largura ajustada
+ao texto. O download CSV e o grupo Outros formatos de download foram removidos.
+A tabela de alunos da etapa 2 mantém barras horizontal e vertical visíveis, com
+colunas que preservam espaço para nomes e mensagens de atenção. A validação em
+`tests/check_grid_scrollbars.py` confirma a presença física das barras e o deslocamento
+do conteúdo nos dois eixos em 1600, 1366 e 390 pixels, além dos downloads reais.
+Os seis testes de recálculo/download e relatórios em PDF passaram.
+
 ## Escopo
 
 Alterado apenas `streamlit_app.py`; adicionados `.streamlit/config.toml`, `assets/interface.css` e testes da interface. `app.py`, `requirements.txt`, os dois logotipos e os manuais não foram alterados. As funções `inspect_workbook`, `room_choices_for_mode`, `make_result`, `optimize` e a exportação continuam no código original.
